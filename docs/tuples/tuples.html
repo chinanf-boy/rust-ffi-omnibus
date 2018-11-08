@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Tuples - The Rust FFI Omnibus</title>
+  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+">
+
+  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
+  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/tuples/tuples.html">
+  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
+  <script src="/rust-ffi-omnibus/script/main.js"></script>
+</head>
+
+
+  <body class="site">
+
+    <header class="site-header">
+
+  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
+
+</header>
+
+
+    <div class="site-content content">
+      <main class="content-content">
+        <h1 id="rust-functions-that-accept-and-return-tuples">Rust functions that accept and return tuples</h1>
+
+<p>C has no notion of tuples, but the closest analog is a plain
+struct. You will need to create individual structs for each unique
+combination of types. Here, we create a structure that represents two
+32-bit unsigned integers.</p>
+
+<pre><code class="rust">extern crate libc;
+
+use libc::uint32_t;
+use std::convert::From;
+
+// A Rust function that accepts a tuple
+fn flip_things_around_rust(tup: (u32, u32)) -&gt; (u32, u32) {
+    let (a, b) = tup;
+    (b+1, a-1)
+}
+
+// A struct that can be passed between C and Rust
+#[repr(C)]
+pub struct Tuple {
+    x: uint32_t,
+    y: uint32_t,
+}
+
+// Conversion functions
+impl From&lt;(u32, u32)&gt; for Tuple {
+    fn from(tup: (u32, u32)) -&gt; Tuple {
+        Tuple { x: tup.0, y: tup.1 }
+    }
+}
+
+impl From&lt;Tuple&gt; for (u32, u32) {
+    fn from(tup: Tuple) -&gt; (u32, u32) {
+        (tup.x, tup.y)
+    }
+}
+
+// The exported C method
+#[no_mangle]
+pub extern fn flip_things_around(tup: Tuple) -&gt; Tuple {
+    flip_things_around_rust(tup.into()).into()
+}
+
+#[allow(dead_code)]
+pub extern fn fix_linking_when_not_using_stdlib() { panic!() }
+</code></pre>
+
+<p><code class="highlighter-rouge">#[repr(C)]</code> is used to inform the compiler that it should arrange the
+fields of the struct as a C compiler would. The two conversion
+implementations use <a href="http://doc.rust-lang.org/std/convert/trait.From.html"><code class="highlighter-rouge">std::convert::From</code></a> to provide ergonomic
+conversion between the struct and a corresponding tuple.</p>
+
+<h2 id="c">C</h2>
+
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;stdint.h&gt;
+
+typedef struct {
+  uint32_t x;
+  uint32_t y;
+} tuple_t;
+
+extern tuple_t flip_things_around(tuple_t);
+
+int main(void) {
+  tuple_t initial = { .x = 10, .y = 20 };
+  tuple_t new = flip_things_around(initial);
+  printf(&quot;(%u,%u)\n&quot;, new.x, new.y);
+  return 0;
+}
+</code></pre>
+
+<p>Since we are conforming to C-compatible idioms, the implementation is
+straight-forward. We define a <code class="highlighter-rouge">struct</code> with fields that match the
+types and order of the Rust struct, then create an instance and call
+the method.</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<pre><code class="ruby">require &#39;ffi&#39;
+
+class Tuple &lt; FFI::Struct
+  layout :x, :uint32,
+         :y, :uint32
+
+  def to_s
+    &quot;(#{self[:x]},#{self[:y]})&quot;
+  end
+end
+
+module Tuples
+  extend FFI::Library
+  ffi_lib &#39;tuples&#39;
+  attach_function :flip_things_around, [Tuple.by_value], Tuple.by_value
+end
+
+tup = Tuple.new
+tup[:x] = 10
+tup[:y] = 20
+
+puts Tuples.flip_things_around(tup)
+</code></pre>
+
+<p>To mirror the structure definition, we create a subclass of
+<code class="highlighter-rouge">FFI::Struct</code> and use <code class="highlighter-rouge">layout</code> to specify the field names and types.</p>
+
+<p>When attaching the function, we use <code class="highlighter-rouge">by_value</code> to indicate that the
+struct will be passed directly, without the need for indirection via
+pointers.</p>
+
+<h2 id="python">Python</h2>
+
+<pre><code class="python">#!/usr/bin/env python3
+
+import sys, ctypes
+from ctypes import c_uint32, Structure
+
+class Tuple(Structure):
+    _fields_ = [(&quot;x&quot;, c_uint32),
+                (&quot;y&quot;, c_uint32)]
+
+    def __str__(self):
+        return &quot;({},{})&quot;.format(self.x, self.y)
+
+prefix = {&#39;win32&#39;: &#39;&#39;}.get(sys.platform, &#39;lib&#39;)
+extension = {&#39;darwin&#39;: &#39;.dylib&#39;, &#39;win32&#39;: &#39;.dll&#39;}.get(sys.platform, &#39;.so&#39;)
+lib = ctypes.cdll.LoadLibrary(prefix + &quot;tuples&quot; + extension)
+
+lib.flip_things_around.argtypes = (Tuple, )
+lib.flip_things_around.restype = Tuple
+
+tup = Tuple(10, 20)
+
+print(lib.flip_things_around(tup))
+</code></pre>
+
+<p>To mirror the structure definition, we create a subclass of
+<code class="highlighter-rouge">ctypes.Structure</code> and use <code class="highlighter-rouge">_fields_</code> to specify the field names and
+types.</p>
+
+<h2 id="haskell">Haskell</h2>
+
+<p>Unfortunately, Haskell does not currently support passing or returning
+arbitrary structs. Pointer indirection is always required.</p>
+
+<h2 id="nodejs">Node.js</h2>
+
+<pre><code class="javascript">const ffi = require(&#39;ffi&#39;);
+const struct = require(&#39;ref-struct&#39;);
+
+const Tuple = struct({
+  x: &#39;uint32&#39;,
+  y: &#39;uint32&#39;,
+});
+
+const lib = ffi.Library(&#39;libtuples&#39;, {
+  flip_things_around: [Tuple, [Tuple]],
+});
+
+const tup = new Tuple({x: 10, y: 20});
+const result = lib.flip_things_around(tup);
+console.log(&#39;(%d,%d)&#39;, result.x, result.y);
+</code></pre>
+
+<p>The <a href="https://www.npmjs.com/package/ref-struct"><code class="highlighter-rouge">ref-struct</code></a> package allows us to build struct types
+which can be passed to FFI functions.</p>
+
+<h2 id="c-1">C#</h2>
+
+<pre><code class="csharp">using System;
+using System.Runtime.InteropServices;
+
+[StructLayout(LayoutKind.Sequential)]
+struct IntTuple {
+    public uint x;
+    public uint y;
+
+    public static implicit operator Tuple&lt;uint, uint&gt;(IntTuple t)
+    {
+        return Tuple.Create(t.x, t.y);
+    }
+
+    public static implicit operator IntTuple(Tuple&lt;uint, uint&gt; t)
+    {
+        return new IntTuple { x = t.Item1, y = t.Item2 };
+    }
+};
+
+class Tuples
+{
+    [DllImport(&quot;tuples&quot;)]
+    private static extern IntTuple flip_things_around(IntTuple t);
+
+    public static Tuple&lt;uint, uint&gt; FlipThingsAround(Tuple&lt;uint, uint&gt; t)
+    {
+        return flip_things_around(t);
+    }
+
+    static public void Main()
+    {
+        var tuple = Tuple.Create(10u, 20u);
+        var newTuple = Tuples.FlipThingsAround(tuple);
+        Console.WriteLine($&quot;({newTuple.Item1},{newTuple.Item2})&quot;);
+    }
+}
+</code></pre>
+
+<p>To mirror the tuple structure definition, we create a <code class="highlighter-rouge">struct</code> using
+the <code class="highlighter-rouge">StructLayout</code> property and define the layout as sequential. We
+also provide some implicit conversion operators to make going between
+types fairly seamless.</p>
+
+<h2 id="julia">Julia</h2>
+
+<pre><code class="">#!/usr/bin/env julia
+using Libdl
+
+libname = &quot;tuples&quot;
+if !Sys.iswindows()
+    libname = &quot;lib$(libname)&quot;
+end
+
+lib = Libdl.dlopen(libname)
+flipthingsaround_sym = Libdl.dlsym(lib, :flip_things_around)
+
+struct Tuple
+    x::UInt32
+    y::UInt32
+end
+
+flipthingsaround(t:: Tuple) = ccall(
+    flipthingsaround_sym,
+    Tuple, (Tuple,),
+    t)
+
+initial = Tuple(10, 20)
+newtuple = flipthingsaround(initial)
+println(&quot;($(newtuple.x),$(newtuple.y))&quot;)
+</code></pre>
+
+<p>Julia struct types defined with the exact same field layout are
+already compatible with C’s data arrangement. Since all fields are <a href="https://docs.julialang.org/en/v1/base/base/#Base.isbits"><code class="highlighter-rouge">isbits</code></a>, then so is the <code class="highlighter-rouge">Tuple</code> type. As such, it
+will store each member inline and will be passed to the native
+function by value.</p>
+
+
+      </main>
+
+      <nav class="content-navigation">
+        <ul>
+          
+            <li><a href="/rust-ffi-omnibus/">前言</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="footer-meta">
+    <ul class="footer-meta-social-media">
+      <li>
+        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+          <span class="icon  icon--github">
+            <svg viewBox="0 0 16 16">
+              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+            </svg>
+          </span>
+
+          <span class="username">rust-ffi-omnibus</span>
+        </a>
+      </li>
+
+      
+    </ul>
+
+    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+</p>
+  </div>
+
+  <div class="footer-license">
+    <div class="footer-license-text">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
+      </a>
+      The Rust FFI Omnibus is licensed under a
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+      </a>
+      The source code is licensed under the
+      <a rel="license" href="http://opensource.org/licenses/MIT">
+        MIT License.
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+
+  </body>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
+  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+
+  
+</html>

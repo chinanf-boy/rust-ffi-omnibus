@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>The Rust FFI Omnibus</title>
+  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+">
+
+  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
+  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/readme.html">
+  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
+  <script src="/rust-ffi-omnibus/script/main.js"></script>
+</head>
+
+
+  <body class="site">
+
+    <header class="site-header">
+
+  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
+
+</header>
+
+
+    <div class="site-content content">
+      <main class="content-content">
+        <p><em>The Rust FFI Omnibus</em> is a collection of examples of using code
+written in <a href="http://www.rust-lang.org/">Rust</a> from other languages.</p>
+
+<p>Rust has drawn a large number of people who are interested in calling
+native code from higher-level languages. Many nearly duplicate
+questions have been asked on <a href="http://stackoverflow.com/questions/tagged/rust">Stack Overflow</a>, so the <em>Omnibus</em>
+was created as a central location for easy reference.</p>
+
+<p>Both this site and all the examples are kept in a
+<a href="https://github.com/shepmaster/rust-ffi-omnibus">GitHub repository</a> and are tested for correctness. Check out
+each example for complete, working code. Requests, suggestions, or
+corrections can be <a href="https://github.com/shepmaster/rust-ffi-omnibus/issues">filed using Github Issues</a>.</p>
+
+<p>Translations</p>
+
+<p>The Omnibus is translated into different languages by volunteers,
+thanks!</p>
+
+<ul>
+  <li><a href="http://llever.com/rust-ffi-omnibus/">Chinese 🇨🇳</a> by <a href="https://github.com/chinanf-boy/rust-ffi-omnibus">@chinanf-boy</a></li>
+</ul>
+
+
+      </main>
+
+      <nav class="content-navigation">
+        <ul>
+          
+            <li><a href="/rust-ffi-omnibus/">前言</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="footer-meta">
+    <ul class="footer-meta-social-media">
+      <li>
+        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+          <span class="icon  icon--github">
+            <svg viewBox="0 0 16 16">
+              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+            </svg>
+          </span>
+
+          <span class="username">rust-ffi-omnibus</span>
+        </a>
+      </li>
+
+      
+    </ul>
+
+    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+</p>
+  </div>
+
+  <div class="footer-license">
+    <div class="footer-license-text">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
+      </a>
+      The Rust FFI Omnibus is licensed under a
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+      </a>
+      The source code is licensed under the
+      <a rel="license" href="http://opensource.org/licenses/MIT">
+        MIT License.
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+
+  </body>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
+  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+
+  
+</html>

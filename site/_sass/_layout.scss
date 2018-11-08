@@ -1,0 +1,154 @@
+// Grid mixins
+
+$large: "(min-width: 800px)";
+
+@mixin display-flex {
+  display: -webkit-flex;
+  display: -ms-flex;
+  display: flex;
+}
+
+@mixin flex-wrap($type) {
+  -webkit-flex-wrap: $type;
+  -ms-flex-wrap: $type;
+  flex-wrap: $type;
+}
+
+@mixin flex-direction($dir) {
+  -webkit-flex-direction: $dir;
+  -ms-flex-direction: $dir;
+  flex-direction: $dir;
+}
+
+@mixin flex($arg) {
+  -webkit-flex: $arg;
+  -ms-flex: $arg;
+  flex: $arg;
+}
+
+@mixin grid {
+  @include display-flex;
+  @include flex-wrap(wrap);
+}
+
+@mixin grid-cell($width, $total) {
+  @include flex(0 0 (100% * $width / $total));
+  max-width: (100% * $width / $total);
+}
+
+@mixin grid-offset($offset, $total) {
+  margin-left: 100% * $offset / $total;
+}
+
+// Sticky footer
+
+.site {
+  @include display-flex;
+  min-height: 100vh;
+  @include flex-direction(column);
+
+  &-content {
+    @include flex(1);
+  }
+}
+
+.site-header {
+  @include grid;
+
+  border-bottom: 1px solid $grey-color-light;
+
+  &-title {
+    @include grid-cell(10, 12);
+    @include grid-offset(1, 12);
+
+    font-size: 1.5em;
+    line-height: 1.5em;
+    letter-spacing: -1px;
+
+    @media #{$large} {
+      @include grid-cell(8, 12);
+      @include grid-offset(2, 12);
+
+      font-size: 2em;
+      line-height: 3.5em;
+    }
+
+    &,
+    &:visited {
+      color: $grey-color-dark;
+    }
+  }
+}
+
+.content {
+  @include grid;
+
+  padding: $spacing-unit 0;
+
+  &-content {
+    @include grid-cell(10, 12);
+    @include grid-offset(1, 12);
+
+    @media #{$large} {
+      @include grid-cell(6, 12);
+      @include grid-offset(2, 12);
+    }
+  }
+
+  &-navigation {
+    @include grid-cell(10, 12);
+    @include grid-offset(1, 12);
+
+    @media #{$large} {
+      @include grid-cell(2, 12);
+      @include grid-offset(0, 12);
+    }
+  }
+}
+
+.site-footer {
+  border-top: 1px solid $grey-color-light;
+  padding: $spacing-unit 0;
+}
+
+.footer-meta {
+  @include grid;
+
+  &-social-media {
+    @include grid-cell(10, 12);
+    @include grid-offset(1, 12);
+
+    @media #{$large} {
+      @include grid-cell(2, 12);
+      @include grid-offset(2, 12);
+    }
+
+    list-style: none;
+  }
+
+  &-description {
+    @include grid-cell(10, 12);
+    @include grid-offset(1, 12);
+
+    @media #{$large} {
+      @include grid-cell(3, 12);
+      @include grid-offset(3, 12);
+    }
+  }
+}
+
+.footer-license {
+  @include grid;
+
+  font-size: 80%;
+
+  &-text {
+    @include grid-cell(10, 12);
+    @include grid-offset(1, 12);
+
+    @media #{$large} {
+      @include grid-cell(8, 12);
+      @include grid-offset(2, 12);
+    }
+  }
+}

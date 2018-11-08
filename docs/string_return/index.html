@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>字符串返回值 - The Rust FFI Omnibus</title>
+  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+">
+
+  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
+  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/string_return/">
+  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
+  <script src="/rust-ffi-omnibus/script/main.js"></script>
+</head>
+
+
+  <body class="site">
+
+    <header class="site-header">
+
+  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
+
+</header>
+
+
+    <div class="site-content content">
+      <main class="content-content">
+        <h1 id="rust">返回 已分配字符串 的 Rust函数</h1>
+
+<p>由于同样的原因,通过FFI 返回分配的字符串 很复杂<a href="../objects">而返回一个对象</a>: Rust分配器 可以与 FFI边界另一侧的分配器不同. 它也有与<a href="../string_arguments">传递一个字符串参数</a>处理 NUL终止字符串 相同的限制.</p>
+
+<pre><code class="rust">extern crate libc;
+
+use libc::{c_char, uint8_t};
+use std::ffi::CString;
+use std::iter;
+
+#[no_mangle]
+pub extern fn theme_song_generate(length: uint8_t) -&gt; *mut c_char {
+    let mut song = String::from(&quot;💣 &quot;);
+    song.extend(iter::repeat(&quot;na &quot;).take(length as usize));
+    song.push_str(&quot;Batman! 💣&quot;);
+
+    let c_str_song = CString::new(song).unwrap();
+    c_str_song.into_raw()
+}
+
+#[no_mangle]
+pub extern fn theme_song_free(s: *mut c_char) {
+    unsafe {
+        if s.is_null() { return }
+        CString::from_raw(s)
+    };
+}
+</code></pre>
+
+<p>这里我们使用一对方法<a href="https://doc.rust-lang.org/std/ffi/struct.CString.html#method.into_raw"><code class="highlighter-rouge">into_raw</code></a>和<a href="https://doc.rust-lang.org/std/ffi/struct.CString.html#method.from_raw"><code class="highlighter-rouge">from_raw</code></a>. 这些转换一个<code class="highlighter-rouge">CString</code>到 可以通过FFI边界的 原始指针. 字符串的所有权 将传递 给调用者,但 调用者 必须将 字符串返回给Rust 才能正确释放内存.</p>
+
+<h2 id="c">C</h2>
+
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;stdint.h&gt;
+
+extern char *
+theme_song_generate(uint8_t length);
+
+extern void
+theme_song_free(char *);
+
+int main(void) {
+  char *song = theme_song_generate(5);
+  printf(&quot;%s\n&quot;, song);
+  theme_song_free(song);
+}
+</code></pre>
+
+<p>对于C版本来说没什么好玩的: <code class="highlighter-rouge">char *</code>是返回的,可以打印,然后转回来释放.</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<pre><code class="ruby">require &#39;ffi&#39;
+
+class ThemeSong &lt; FFI::AutoPointer
+  def self.release(ptr)
+    Binding.free(ptr)
+  end
+
+  def to_s
+    @str ||= self.read_string.force_encoding(&#39;UTF-8&#39;)
+  end
+
+  module Binding
+    extend FFI::Library
+    ffi_lib &#39;string_return&#39;
+
+    attach_function :generate, :theme_song_generate,
+                    [:uint8], ThemeSong
+    attach_function :free, :theme_song_free,
+                    [ThemeSong], :void
+  end
+end
+
+puts ThemeSong::Binding.generate(5)
+</code></pre>
+
+<p>因为 字符串已分配,所以我们需要确保 在超出范围时 解除分配. 像一个<a href="../objects">对象</a>,我们的<code class="highlighter-rouge">FFI::AutoPointer</code>子类会为我们自动释放指针.</p>
+
+<p>我们定义<code class="highlighter-rouge">to_s</code>使用 UTF-8编码 将 原始字符串 延迟转换为 Ruby字符串 并记住结果. Rust生成的 任何字符串 都是有效的 UTF-8.</p>
+
+<h2 id="python">Python</h2>
+
+<pre><code class="python">#!/usr/bin/env python3
+
+import sys, ctypes
+from ctypes import c_void_p, c_uint8
+
+prefix = {&#39;win32&#39;: &#39;&#39;}.get(sys.platform, &#39;lib&#39;)
+extension = {&#39;darwin&#39;: &#39;.dylib&#39;, &#39;win32&#39;: &#39;.dll&#39;}.get(sys.platform, &#39;.so&#39;)
+lib = ctypes.cdll.LoadLibrary(prefix + &quot;string_return&quot; + extension)
+
+lib.theme_song_generate.argtypes = (c_uint8, )
+lib.theme_song_generate.restype = c_void_p
+
+lib.theme_song_free.argtypes = (c_void_p, )
+
+def themeSongGenerate(count):
+    ptr = lib.theme_song_generate(count)
+    try:
+        return ctypes.cast(ptr, ctypes.c_char_p).value.decode(&#39;utf-8&#39;)
+    finally:
+        lib.theme_song_free(ptr)
+
+print(themeSongGenerate(5))
+</code></pre>
+
+<p>我们必须使用<code class="highlighter-rouge">c_void_p</code>代替<code class="highlighter-rouge">c_char_p</code>作为类型的返回值,因为原<code class="highlighter-rouge">c_char_p</code>将自动转换为Python字符串. 这个字符串将被 Python不正确地释放,而不是Rust.</p>
+
+<p>我们投了<code class="highlighter-rouge">c_void_p</code>到了<code class="highlighter-rouge">c_char_p</code>,获取值,并将 原始字节编码为UTF-8字符串.</p>
+
+<h2 id="haskell">Haskell</h2>
+
+<pre><code class="haskell">{-# LANGUAGE ForeignFunctionInterface #-}
+
+import Data.Word (Word8)
+import Foreign.Ptr (nullPtr)
+import Foreign.C.String (CString(..), peekCString)
+
+foreign import ccall unsafe &quot;theme_song_generate&quot;
+  theme_song_generate :: Word8 -&gt; IO (CString)
+
+foreign import ccall unsafe &quot;theme_song_free&quot;
+  theme_song_free :: CString -&gt; IO ()
+
+createThemeSong :: Word8 -&gt; IO (Maybe (String))
+createThemeSong len = do
+  ptr &lt;- theme_song_generate len
+  if ptr /= nullPtr
+    then do
+      str &lt;- peekCString ptr
+      theme_song_free ptr
+      return $ Just str
+    else
+      return Nothing
+
+main :: IO ()
+main = do
+  song &lt;- createThemeSong 5
+  case song of
+    Nothing -&gt; putStrLn &quot;Unable to create theme song&quot;
+    Just str -&gt; putStrLn str
+</code></pre>
+
+<p>在调用FFI方法之后,我们检查字符串是否是<code class="highlighter-rouge">NULL</code>. 如果没有,我们使用<code class="highlighter-rouge">peekCString</code> 将 其转换为Haskell字符串 并释放 Rust字符串.</p>
+
+<h2 id="nodejs">Node.js</h2>
+
+<pre><code class="javascript">const ffi = require(&#39;ffi&#39;);
+
+const lib = ffi.Library(&#39;libstring_return&#39;, {
+  theme_song_generate: [&#39;char *&#39;, [&#39;uint8&#39;]],
+  theme_song_free: [&#39;void&#39;, [&#39;char *&#39;]],
+});
+
+function themeSongGenerate(len) {
+  const songPtr = lib.theme_song_generate(len);
+  try {
+    return songPtr.readCString();
+  } finally {
+    lib.theme_song_free(songPtr);
+  }
+}
+
+console.log(themeSongGenerate(5));
+</code></pre>
+
+<p>该字符串作为<code class="highlighter-rouge">char *</code>返回,我们可以通过调用<code class="highlighter-rouge">readCString</code>转换为JavaScript字符串,在将它传回去之前.</p>
+
+<h2 id="c-1">C#</h2>
+
+<pre><code class="csharp">using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+internal class Native
+{
+    [DllImport(&quot;string_return&quot;)]
+    internal static extern ThemeSongHandle theme_song_generate(byte length);
+    [DllImport(&quot;string_return&quot;)]
+    internal static extern void theme_song_free(IntPtr song);
+}
+
+internal class ThemeSongHandle : SafeHandle
+{
+    public ThemeSongHandle() : base(IntPtr.Zero, true) {}
+
+    public override bool IsInvalid
+    {
+        get { return false; }
+    }
+
+    public string AsString()
+    {
+        int len = 0;
+        while (Marshal.ReadByte(handle, len) != 0) { ++len; }
+        byte[] buffer = new byte[len];
+        Marshal.Copy(handle, buffer, 0, buffer.Length);
+        return Encoding.UTF8.GetString(buffer);
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        Native.theme_song_free(handle);
+        return true;
+    }
+}
+
+public class ThemeSong : IDisposable
+{
+    private ThemeSongHandle song;
+    private string songString;
+
+    public ThemeSong(byte length)
+    {
+        song = Native.theme_song_generate(length);
+    }
+
+    public override string ToString()
+    {
+        if (songString == null) {
+            songString = song.AsString();
+        }
+        return songString;
+    }
+
+    public void Dispose()
+    {
+        song.Dispose();
+    }
+
+    static public void Main()
+    {
+          var song = new ThemeSong(5);
+          Console.WriteLine(&quot;{0}&quot;, song);
+    }
+}
+</code></pre>
+
+<p>我们遵循与 对象示例 类似的模式: Rust字符串是包含在<code class="highlighter-rouge">SafeHandle</code>子类和一个包装类<code class="highlighter-rouge">ThemeSong</code>,确保控制正确放置.</p>
+
+<p>不幸的是,没有简单的方法将 指针 读作 UTF-8字符串. C#有 ANSI字符串和”Unicode”字符串 (实际上是UCS-2) 的情况,但没有UTF-8. 我们需要自己写.</p>
+
+<h2 id="julia">Julia</h2>
+
+<pre><code class="">#!/usr/bin/env julia
+using Libdl
+
+libname = &quot;string_return&quot;
+if !Sys.iswindows()
+    libname = &quot;lib$(libname)&quot;
+end
+
+lib = Libdl.dlopen(libname)
+themesonggenerator_sym = Libdl.dlsym(lib, :theme_song_generate)
+themesongfree_sym = Libdl.dlsym(lib, :theme_song_free)
+
+function generatethemesong(n::Int)
+    s = ccall(
+        themesonggenerator_sym,
+        Cstring, (UInt8,),
+        n)
+    out = unsafe_string(s)
+    ccall(
+        themesongfree_sym,
+        Cvoid, (Cstring,),
+        s
+    )
+    out
+end
+
+song = generatethemesong(5)
+println(song)
+</code></pre>
+
+<p>我们使用 <code class="highlighter-rouge">Cstring</code> 数据类型 表示为一个 NUL-终止 字符。
+而不是用Julia空间已分配的字符表示, 这个例子
+用<code class="highlighter-rouge">unsafe_string</code>建立了字符的副本 , 由Julia自身管理, 并在之后传回Rust字符串。该
+<a href="../objects#julia">objects</a>部分提供了一个
+在Julia语言,资源仍然存在的例子。</p>
+
+
+      </main>
+
+      <nav class="content-navigation">
+        <ul>
+          
+            <li><a href="/rust-ffi-omnibus/">前言</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="footer-meta">
+    <ul class="footer-meta-social-media">
+      <li>
+        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+          <span class="icon  icon--github">
+            <svg viewBox="0 0 16 16">
+              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+            </svg>
+          </span>
+
+          <span class="username">rust-ffi-omnibus</span>
+        </a>
+      </li>
+
+      
+    </ul>
+
+    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+</p>
+  </div>
+
+  <div class="footer-license">
+    <div class="footer-license-text">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
+      </a>
+      The Rust FFI Omnibus is licensed under a
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+      </a>
+      The source code is licensed under the
+      <a rel="license" href="http://opensource.org/licenses/MIT">
+        MIT License.
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+
+  </body>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
+  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+
+  
+</html>

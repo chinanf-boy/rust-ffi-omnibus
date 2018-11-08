@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>对象 - The Rust FFI Omnibus</title>
+  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+">
+
+  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
+  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/objects/">
+  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
+  <script src="/rust-ffi-omnibus/script/main.js"></script>
+</head>
+
+
+  <body class="site">
+
+    <header class="site-header">
+
+  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
+
+</header>
+
+
+    <div class="site-content content">
+      <main class="content-content">
+        <h1 id="rust">其他语言使用Rust对象</h1>
+
+<p>让我们创建一个Rust对象,告诉我们 每个美国邮政编码 中有多少人. 我们希望能够在其他语言中使用 此逻辑,但我们只需要 在FFI边界上 传递 整数或字符串 等简单原语. 该对象将具有 可变和不可变的方法. 因为我们无法查看对象内部,所以这通常被称为<em>不透明的物体</em>或者<em>不透明的指针</em>.</p>
+
+<pre><code class="rust">extern crate libc;
+
+use libc::{c_char, uint32_t};
+use std::collections::HashMap;
+use std::ffi::CStr;
+
+pub struct ZipCodeDatabase {
+    population: HashMap&lt;String, u32&gt;,
+}
+
+impl ZipCodeDatabase {
+    fn new() -&gt; ZipCodeDatabase {
+        ZipCodeDatabase {
+            population: HashMap::new(),
+        }
+    }
+
+    fn populate(&amp;mut self) {
+        for i in 0..100000 {
+            let zip = format!(&quot;{:05}&quot;, i);
+            self.population.insert(zip, i);
+        }
+    }
+
+    fn population_of(&amp;self, zip: &amp;str) -&gt; u32 {
+        self.population.get(zip).cloned().unwrap_or(0)
+    }
+}
+
+#[no_mangle]
+pub extern fn zip_code_database_new() -&gt; *mut ZipCodeDatabase {
+    Box::into_raw(Box::new(ZipCodeDatabase::new()))
+}
+
+#[no_mangle]
+pub extern fn zip_code_database_free(ptr: *mut ZipCodeDatabase) {
+    if ptr.is_null() { return }
+    unsafe { Box::from_raw(ptr); }
+}
+
+#[no_mangle]
+pub extern fn zip_code_database_populate(ptr: *mut ZipCodeDatabase) {
+    let database = unsafe {
+        assert!(!ptr.is_null());
+        &amp;mut *ptr
+    };
+    database.populate();
+}
+
+#[no_mangle]
+pub extern fn zip_code_database_population_of(ptr: *const ZipCodeDatabase, zip: *const c_char) -&gt; uint32_t {
+    let database = unsafe {
+        assert!(!ptr.is_null());
+        &amp;*ptr
+    };
+    let zip = unsafe {
+        assert!(!zip.is_null());
+        CStr::from_ptr(zip)
+    };
+    let zip_str = zip.to_str().unwrap();
+    database.population_of(zip_str)
+}
+</code></pre>
+
+<p>该<code class="highlighter-rouge">struct</code>以Rust正常的方式定义的. 一<code class="highlighter-rouge">extern</code>为 对象的每个函数 创建函数. C 没有 内置的 命名空间概念,因此 为每个函数添加 包名或类型名称 是正常的. 对于这个例子,我们使用<code class="highlighter-rouge">zip_code_database</code>. 遵循正常的 C 规范,始终将 指向对象的指针 作为 第一个参数.</p>
+
+<p>要创建一个新的对象实例,我们 <code class="highlighter-rouge">box</code>了 对象的构造函数. 这会将 结构 放在堆上,它将具有稳定的内存地址. 使用<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html#method.into_raw"><code class="highlighter-rouge">Box::into_raw</code></a> 将 该地址转换为 原始指针.</p>
+
+<p>该指针指向 Rust分配的内存; Rust分配的内存<strong>必须</strong>由Rust解除分配. 我们用<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html#method.from_raw"><code class="highlighter-rouge">Box::from_raw</code></a>将 指针 转回<code class="highlighter-rouge">Box&lt;ZipCodeDatabase&gt;</code>当释放对象时. 与其他功能不同,我们<em>能</em>允许<code class="highlighter-rouge">NULL</code>通过,但在这种情况下 根本不做任何事. 这对 客户程序员来说 非常好.</p>
+
+<p>要从 原始指针 创建 引用,可以使用简洁语法<code class="highlighter-rouge">&amp;*</code>,表示应该 取消引用指针 然后重新引用. 创建 可变引用 类似,但使用<code class="highlighter-rouge">&amp;mut *</code>. 像其他指针一样,您必须确保指针不是<code class="highlighter-rouge">NULL</code>.</p>
+
+<p>注意一个<code class="highlighter-rouge">*const T</code>可由<code class="highlighter-rouge">*mut T</code>转换,并且没有什么能阻止 客户端代码 永远不会调用 释放函数,也不会多次调用它. 内存管理和安全保障 完全掌握在程序员手中.</p>
+
+<h2 id="c">C</h2>
+
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;stdint.h&gt;
+
+typedef struct zip_code_database_S zip_code_database_t;
+
+extern zip_code_database_t *
+zip_code_database_new(void);
+
+extern void
+zip_code_database_free(zip_code_database_t *);
+
+extern void
+zip_code_database_populate(zip_code_database_t *);
+
+extern uint32_t
+zip_code_database_population_of(const zip_code_database_t *, const char *zip);
+
+int main(void) {
+  zip_code_database_t *database = zip_code_database_new();
+
+  zip_code_database_populate(database);
+  uint32_t pop1 = zip_code_database_population_of(database, &quot;90210&quot;);
+  uint32_t pop2 = zip_code_database_population_of(database, &quot;20500&quot;);
+
+  zip_code_database_free(database);
+
+  printf(&quot;%d\n&quot;, (int32_t)pop1 - (int32_t)pop2);
+}
+</code></pre>
+
+<p>创建一个虚拟结构,以提供少量的类型安全性.</p>
+
+<p>该<code class="highlighter-rouge">const</code>修饰符适用于适当的函数,甚至
+虽然 const-correctness 在 C 中 比 在Rust中 更具流畅</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<pre><code class="ruby">require &#39;ffi&#39;
+
+class ZipCodeDatabase &lt; FFI::AutoPointer
+  def self.release(ptr)
+    Binding.free(ptr)
+  end
+
+  def populate
+    Binding.populate(self)
+  end
+
+  def population_of(zip)
+    Binding.population_of(self, zip)
+  end
+
+  module Binding
+    extend FFI::Library
+    ffi_lib &#39;objects&#39;
+
+    attach_function :new, :zip_code_database_new,
+                    [], ZipCodeDatabase
+    attach_function :free, :zip_code_database_free,
+                    [ZipCodeDatabase], :void
+    attach_function :populate, :zip_code_database_populate,
+                    [ZipCodeDatabase], :void
+    attach_function :population_of, :zip_code_database_population_of,
+                    [ZipCodeDatabase, :string], :uint32
+  end
+end
+
+database = ZipCodeDatabase::Binding.new
+
+database.populate
+pop1 = database.population_of(&quot;90210&quot;)
+pop2 = database.population_of(&quot;20500&quot;)
+
+puts pop1 - pop2
+</code></pre>
+
+<p>为了包装原始函数,我们创建了一个继承自<a href="http://www.rubydoc.info/github/ffi/ffi/FFI/AutoPointer"><code class="highlighter-rouge">AutoPointer</code></a>的小类. <code class="highlighter-rouge">AutoPointer</code>将确保在释放对象时,释放底层资源. 为此,用户必须定义<code class="highlighter-rouge">self.release</code>方法.</p>
+
+<p>不幸的是,因为我们继承了<code class="highlighter-rouge">AutoPointer</code>,我们无法重新定义 初始化程序. 为了更好地将 概念组合 在一起,我们将 FFI方法 绑定 在嵌套模块中. 我们为绑定方法提供了 更短的名称,使客户端可以只调用<code class="highlighter-rouge">ZipCodeDatabase::Binding.new</code>.</p>
+
+<h2 id="python">Python</h2>
+
+<pre><code class="python">#!/usr/bin/env python3
+
+import sys, ctypes
+from ctypes import c_char_p, c_uint32, Structure, POINTER
+
+class ZipCodeDatabaseS(Structure):
+    pass
+
+prefix = {&#39;win32&#39;: &#39;&#39;}.get(sys.platform, &#39;lib&#39;)
+extension = {&#39;darwin&#39;: &#39;.dylib&#39;, &#39;win32&#39;: &#39;.dll&#39;}.get(sys.platform, &#39;.so&#39;)
+lib = ctypes.cdll.LoadLibrary(prefix + &quot;objects&quot; + extension)
+
+lib.zip_code_database_new.restype = POINTER(ZipCodeDatabaseS)
+
+lib.zip_code_database_free.argtypes = (POINTER(ZipCodeDatabaseS), )
+
+lib.zip_code_database_populate.argtypes = (POINTER(ZipCodeDatabaseS), )
+
+lib.zip_code_database_population_of.argtypes = (POINTER(ZipCodeDatabaseS), c_char_p)
+lib.zip_code_database_population_of.restype = c_uint32
+
+class ZipCodeDatabase:
+    def __init__(self):
+        self.obj = lib.zip_code_database_new()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        lib.zip_code_database_free(self.obj)
+
+    def populate(self):
+        lib.zip_code_database_populate(self.obj)
+
+    def population_of(self, zip):
+        return lib.zip_code_database_population_of(self.obj, zip.encode(&#39;utf-8&#39;))
+
+with ZipCodeDatabase() as database:
+    database.populate()
+    pop1 = database.population_of(&quot;90210&quot;)
+    pop2 = database.population_of(&quot;20500&quot;)
+    print(pop1 - pop2)
+</code></pre>
+
+<p>我们创建一个空结构 来表示我们的类型. 这只会是
+与<code class="highlighter-rouge">POINTER</code>方法结合使用，创建一个新
+类型 作为指向现有指针的指针</p>
+
+<p>为确保正确清理内存,我们使用了<em>上下文经理</em>. 这通过我们的 class 绑定<code class="highlighter-rouge">__enter__</code>和<code class="highlighter-rouge">__exit__</code>方法. 我们使用<code class="highlighter-rouge">with</code>声明开始新的上下文. 当上下文结束时,<code class="highlighter-rouge">__exit__</code>方法将自动调用,防止内存泄漏.</p>
+
+<h2 id="haskell">Haskell</h2>
+
+<pre><code class="haskell">{-# LANGUAGE ForeignFunctionInterface #-}
+
+import Data.Word (Word32)
+import Foreign.Ptr
+import Foreign.ForeignPtr
+import Foreign.C.String (CString(..), newCString)
+
+data ZipCodeDatabase
+
+foreign import ccall unsafe &quot;zip_code_database_new&quot;
+  zip_code_database_new :: IO (Ptr ZipCodeDatabase)
+
+foreign import ccall unsafe &quot;&amp;zip_code_database_free&quot;
+  zip_code_database_free :: FunPtr (Ptr ZipCodeDatabase -&gt; IO ())
+
+foreign import ccall unsafe &quot;zip_code_database_populate&quot;
+  zip_code_database_populate :: Ptr ZipCodeDatabase -&gt; IO ()
+
+foreign import ccall unsafe &quot;zip_code_database_population_of&quot;
+  zip_code_database_population_of :: Ptr ZipCodeDatabase -&gt; CString -&gt; Word32
+
+createDatabase :: IO (Maybe (ForeignPtr ZipCodeDatabase))
+createDatabase = do
+  ptr &lt;- zip_code_database_new
+  if ptr /= nullPtr
+    then do
+      foreignPtr &lt;- newForeignPtr zip_code_database_free ptr
+      return $ Just foreignPtr
+    else
+      return Nothing
+
+populate = zip_code_database_populate
+
+populationOf :: Ptr ZipCodeDatabase -&gt; String -&gt; IO (Word32)
+populationOf db zip = do
+  zip_str &lt;- newCString zip
+  return $ zip_code_database_population_of db zip_str
+
+main :: IO ()
+main = do
+  db &lt;- createDatabase
+  case db of
+    Nothing -&gt; putStrLn &quot;Unable to create database&quot;
+    Just ptr -&gt; withForeignPtr ptr $ \database -&gt; do
+        populate database
+        pop1 &lt;- populationOf database &quot;90210&quot;
+        pop2 &lt;- populationOf database &quot;20500&quot;
+        print (pop1 - pop2)
+</code></pre>
+
+<p>我们首先定义一个空类型 来引用 不透明对象. 在定义导入的函数时,我们使用<code class="highlighter-rouge">Ptr</code>的类型构造 新类型, 将作为从Rust返回的 指针的类型. 我们也用<code class="highlighter-rouge">IO</code>因为 分配,释放和填充对象 都是具有副作用的函数.</p>
+
+<p>由于分配理论上 可能会失败,我们会检查<code class="highlighter-rouge">NULL</code>并从构造函数返回一个<code class="highlighter-rouge">Maybe</code>. 这可能有点过头了,因为当前分配器失败时,Rust会中止该过程.</p>
+
+<p>为了确保自动释放 分配的内存,我们使用<code class="highlighter-rouge">ForeignPtr</code>类型. 这需要一个原始的<code class="highlighter-rouge">Ptr</code>以及 在解除分配包装指针时 调用的函数.</p>
+
+<p>使用包装指针时,<code class="highlighter-rouge">withForeignPtr</code>用于 展开 包装指针 在传递回FFI函数之前.</p>
+
+<h2 id="nodejs">Node.js</h2>
+
+<pre><code class="javascript">const ffi = require(&#39;ffi&#39;);
+
+const lib = ffi.Library(&#39;libobjects&#39;, {
+  zip_code_database_new: [&#39;pointer&#39;, []],
+  zip_code_database_free: [&#39;void&#39;, [&#39;pointer&#39;]],
+  zip_code_database_populate: [&#39;void&#39;, [&#39;pointer&#39;]],
+  zip_code_database_population_of: [&#39;uint32&#39;, [&#39;pointer&#39;, &#39;string&#39;]],
+});
+
+const ZipCodeDatabase = function() {
+  this.ptr = lib.zip_code_database_new();
+};
+
+ZipCodeDatabase.prototype.free = function() {
+  lib.zip_code_database_free(this.ptr);
+};
+
+ZipCodeDatabase.prototype.populate = function() {
+  lib.zip_code_database_populate(this.ptr);
+};
+
+ZipCodeDatabase.prototype.populationOf = function(zip) {
+  return lib.zip_code_database_population_of(this.ptr, zip);
+};
+
+const database = new ZipCodeDatabase();
+try {
+  database.populate();
+  const pop1 = database.populationOf(&#39;90210&#39;);
+  const pop2 = database.populationOf(&#39;20500&#39;);
+  console.log(pop1 - pop2);
+} finally {
+  database.free();
+}
+</code></pre>
+
+<p>导入函数时,我们只需声明一个<code class="highlighter-rouge">pointer</code>返回或接受类型.</p>
+
+<p>为了使访问函数更清晰,我们创建了 一个简单的类 来 维护 我们的指针,并 参数 传递给更低级的函数. 这也让我们有机会用惯用的 JavaScript驼峰大小写 来重命名这些函数.</p>
+
+<p>为了确保清理资源,我们使用了<code class="highlighter-rouge">try</code>阻止,并在<code class="highlighter-rouge">finally</code>调用 释放方法.</p>
+
+<h2 id="c-1">C#</h2>
+
+<pre><code class="csharp">using System;
+using System.Runtime.InteropServices;
+
+internal class Native
+{
+    [DllImport(&quot;objects&quot;)]
+    internal static extern ZipCodeDatabaseHandle zip_code_database_new();
+    [DllImport(&quot;objects&quot;)]
+    internal static extern void zip_code_database_free(IntPtr db);
+    [DllImport(&quot;objects&quot;)]
+    internal static extern void zip_code_database_populate(ZipCodeDatabaseHandle db);
+    [DllImport(&quot;objects&quot;)]
+    internal static extern uint zip_code_database_population_of(ZipCodeDatabaseHandle db, string zip);
+}
+
+internal class ZipCodeDatabaseHandle : SafeHandle
+{
+    public ZipCodeDatabaseHandle() : base(IntPtr.Zero, true) {}
+
+    public override bool IsInvalid
+    {
+        get { return false; }
+    }
+
+    protected override bool ReleaseHandle()
+    {
+        Native.zip_code_database_free(handle);
+        return true;
+    }
+}
+
+public class ZipCodeDatabase : IDisposable
+{
+    private ZipCodeDatabaseHandle db;
+
+    public ZipCodeDatabase()
+    {
+        db = Native.zip_code_database_new();
+    }
+
+    public void Populate()
+    {
+        Native.zip_code_database_populate(db);
+    }
+
+    public uint PopulationOf(string zip)
+    {
+        return Native.zip_code_database_population_of(db, zip);
+    }
+
+    public void Dispose()
+    {
+        db.Dispose();
+    }
+
+    static public void Main()
+    {
+          var db = new ZipCodeDatabase();
+          db.Populate();
+
+          var pop1 = db.PopulationOf(&quot;90210&quot;);
+          var pop2 = db.PopulationOf(&quot;20500&quot;);
+
+          Console.WriteLine(&quot;{0}&quot;, pop1 - pop2);
+    }
+}
+</code></pre>
+
+<p>由于调用 原生函数的能力 将更加分散,我们创建了一个<code class="highlighter-rouge">Native</code>用于保存所有定义的类.</p>
+
+<p>为了确保自动释放分配的内存,我们创建了一个<a href="https://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle(v=vs.110).aspx"><code class="highlighter-rouge">SafeHandle</code></a>类的子类. 这需要 实现 <code class="highlighter-rouge">IsInvalid</code>和<code class="highlighter-rouge">ReleaseHandle</code>. 由于我们的Rust函数接受释放一个<code class="highlighter-rouge">NULL</code>指针,我们可以说 每个指针都是有效的.</p>
+
+<p>我们可以使用我们的 安全包装 <code class="highlighter-rouge">ZipCodeDatabaseHandle</code>作为FFI类型的函数,除了 释放函数. 这些 来自包装器的实际指针将自动 编组到 包装器, .</p>
+
+<p>我们也允许<code class="highlighter-rouge">ZipCodeDatabase</code>参与<code class="highlighter-rouge">IDisposable</code>协议,转发到 安全包装器.</p>
+
+<h2 id="julia">Julia</h2>
+
+<pre><code class="">#!/usr/bin/env julia
+using Libdl
+
+libname = &quot;objects&quot;
+if !Sys.iswindows()
+    libname = &quot;lib$(libname)&quot;
+end
+
+lib = Libdl.dlopen(libname)
+
+zipcodedatabase_new_sym = Libdl.dlsym(lib, :zip_code_database_new)
+zipcodedatabase_free_sym = Libdl.dlsym(lib, :zip_code_database_free)
+zipcodedatabase_populate_sym = Libdl.dlsym(lib, :zip_code_database_populate)
+zipcodedatabase_populationof_sym = Libdl.dlsym(lib, :zip_code_database_population_of)
+
+struct ZipCodeDatabase
+    handle::Ptr{Nothing}
+
+    function ZipCodeDatabase()
+        handle = ccall(zipcodedatabase_new_sym, Ptr{Cvoid}, ())
+        new(handle)
+    end
+
+    function ZipCodeDatabase(f::Function)
+        database = ZipCodeDatabase()
+        out = f(database)
+        close(database)
+        out
+    end
+end
+
+close(database:: ZipCodeDatabase) = ccall(
+    zipcodedatabase_free_sym,
+    Cvoid, (Ptr{Cvoid},),
+    database.handle
+)
+
+populate!(database:: ZipCodeDatabase) = ccall(
+    zipcodedatabase_populate_sym,
+    Cvoid, (Ptr{Cvoid},),
+    database.handle
+)
+
+populationof(database:: ZipCodeDatabase, zipcode:: AbstractString) = ccall(
+    zipcodedatabase_populationof_sym,
+    UInt32, (Ptr{Cvoid}, Cstring),
+    database.handle, zipcode
+)
+
+ZipCodeDatabase() do database
+    populate!(database)
+    pop1 = populationof(database, &quot;90210&quot;)
+    pop2 = populationof(database, &quot;20500&quot;)
+    println(pop1 - pop2)
+end
+</code></pre>
+
+<p>与其他语言一样，我们将控制指针隐藏在新数据类型后面。 填充数据库的方法称为<code class="highlighter-rouge">populate!</code>，遵循Julia修改值方法的惯例，会加上<code class="highlighter-rouge">!</code>的后缀。</p>
+
+<p>目前尚未就Julia应如何处理原生资源达成共识。 虽然用于分配<code class="highlighter-rouge">ZipCodeDatabase</code>的内部构造函数模式，在这里是合适的，但我们也可以想到许多方法让Julia随后释放它。在这个例子中，我们展示了释放对象的两种方法：</p>
+
+<ul>
+  <li>(1)用<code class="highlighter-rouge">do</code>语法的map构造函数，以及</li>
+  <li>(2)用于手动释放对象的close重载。</li>
+</ul>
+
+<p>内部构造函数<code class="highlighter-rouge">ZipCodeDatabase(f)</code>负责创建和释放对象。 使用do语法，用户代码变得类似使用Python语法<code class="highlighter-rouge">with</code> 。或者，程序员可以使用其他构造，并在不再需要时，调用<code class="highlighter-rouge">close</code>方法。</p>
+
+      </main>
+
+      <nav class="content-navigation">
+        <ul>
+          
+            <li><a href="/rust-ffi-omnibus/">前言</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="footer-meta">
+    <ul class="footer-meta-social-media">
+      <li>
+        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+          <span class="icon  icon--github">
+            <svg viewBox="0 0 16 16">
+              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+            </svg>
+          </span>
+
+          <span class="username">rust-ffi-omnibus</span>
+        </a>
+      </li>
+
+      
+    </ul>
+
+    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+</p>
+  </div>
+
+  <div class="footer-license">
+    <div class="footer-license-text">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
+      </a>
+      The Rust FFI Omnibus is licensed under a
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+      </a>
+      The source code is licensed under the
+      <a rel="license" href="http://opensource.org/licenses/MIT">
+        MIT License.
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+
+  </body>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
+  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+
+  
+</html>

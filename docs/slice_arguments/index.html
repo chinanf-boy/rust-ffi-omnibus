@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>切片 参数 - The Rust FFI Omnibus</title>
+  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+">
+
+  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
+  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/slice_arguments/">
+  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
+  <script src="/rust-ffi-omnibus/script/main.js"></script>
+</head>
+
+
+  <body class="site">
+
+    <header class="site-header">
+
+  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
+
+</header>
+
+
+    <div class="site-content content">
+      <main class="content-content">
+        <h1 id="rust">切片参数的Rust函数</h1>
+
+<p>Rust<em>切片</em>将 指针的概念 与 一块定量元素的数据 捆绑在一起. 在 C中,数组由相同的部分组成,但没有标准容器将 它们保持在一起.</p>
+
+<pre><code class="rust">extern crate libc;
+
+use libc::{uint32_t, size_t};
+use std::slice;
+
+#[no_mangle]
+pub extern fn sum_of_even(n: *const uint32_t, len: size_t) -&gt; uint32_t {
+    let numbers = unsafe {
+        assert!(!n.is_null());
+
+        slice::from_raw_parts(n, len as usize)
+    };
+
+    let sum =
+        numbers.iter()
+        .filter(|&amp;v| v % 2 == 0)
+        .fold(0, |acc, v| acc + v);
+    sum as uint32_t
+}
+</code></pre>
+
+<p>转换数组分为两步:</p>
+
+<ol>
+  <li>
+    <p>确保C指针不是<code class="highlighter-rouge">NULL</code>作为 Rust引用可能永远不会<code class="highlighter-rouge">NULL</code>.</p>
+  </li>
+  <li>
+    <p>使用<a href="http://doc.rust-lang.org/std/slice/fn.from_raw_parts.html"><code class="highlighter-rouge">from_raw_parts</code></a>将 指针和长度转换为切片. 这是一种不安全的操作,因为 取消引用 可能会无效内存.</p>
+  </li>
+</ol>
+
+<h2 id="c">C</h2>
+
+<pre><code class="c">#include &lt;stdio.h&gt;
+#include &lt;stdint.h&gt;
+
+extern uint32_t sum_of_even(const uint32_t *numbers, size_t length);
+
+int main(void) {
+  uint32_t numbers[6] = {1,2,3,4,5,6};
+  uint32_t sum = sum_of_even(numbers, 6);
+  printf(&quot;%u\n&quot;, sum);
+  return 0;
+}
+</code></pre>
+
+<p>C调用是直截了当的,因为我们使 Rust代码与C的功能相匹配. 唯一的复杂因素是确保 定义的 和 函数调用的 元素数量 相同.</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<pre><code class="ruby">require &#39;ffi&#39;
+
+module SliceArgumentsFFI
+  extend FFI::Library
+  ffi_lib &#39;slice_arguments&#39;
+  attach_function :sum_of_even, [:pointer, :size_t], :uint32
+end
+
+class SliceArguments
+  extend SliceArgumentsFFI
+
+  def self.sum_of_even(numbers)
+    buf = FFI::MemoryPointer.new(:uint32, numbers.size)
+    buf.write_array_of_uint32(numbers)
+    super(buf, numbers.size)
+  end
+end
+
+puts SliceArguments.sum_of_even([1,2,3,4,5,6])
+</code></pre>
+
+<p>Ruby调用需要 比 以前的示例 更多.</p>
+
+<p>这一次,我们使用<a href="https://github.com/ffi/ffi/wiki/Pointers#memorypointer"><code class="highlighter-rouge">MemoryPointer</code></a> 分配空间来存储我们的整数. 创建后,我们使用将值复制到<code class="highlighter-rouge">write_array_of_uint32</code>其中.</p>
+
+<h2 id="python">Python</h2>
+
+<pre><code class="python">#!/usr/bin/env python3
+
+import sys, ctypes
+from ctypes import POINTER, c_uint32, c_size_t
+
+prefix = {&#39;win32&#39;: &#39;&#39;}.get(sys.platform, &#39;lib&#39;)
+extension = {&#39;darwin&#39;: &#39;.dylib&#39;, &#39;win32&#39;: &#39;.dll&#39;}.get(sys.platform, &#39;.so&#39;)
+lib = ctypes.cdll.LoadLibrary(prefix + &quot;slice_arguments&quot; + extension)
+
+lib.sum_of_even.argtypes = (POINTER(c_uint32), c_size_t)
+lib.sum_of_even.restype = ctypes.c_uint32
+
+def sum_of_even(numbers):
+    buf_type = c_uint32 * len(numbers)
+    buf = buf_type(*numbers)
+    return lib.sum_of_even(buf, len(numbers))
+
+print(sum_of_even([1,2,3,4,5,6]))
+</code></pre>
+
+<p>Python调用需要 比 以前的示例 更多的工作.</p>
+
+<p>这次,我们创建一个新类型来存储 我们的整数 并实例化类型.</p>
+
+<h2 id="haskell">Haskell</h2>
+
+<pre><code class="haskell">{-# LANGUAGE ForeignFunctionInterface #-}
+
+import Data.Word (Word32)
+import Foreign (Ptr)
+import Foreign.Marshal.Array (withArrayLen)
+
+foreign import ccall &quot;sum_of_even&quot;
+  sum_of_even :: Ptr Word32 -&gt; Word32 -&gt; Word32
+
+main :: IO ()
+main = withArrayLen [1,2,3,4,5,6] $ \len arr -&gt;
+    print (sum_of_even arr (fromIntegral len))
+</code></pre>
+
+<p>对于这个例子,我们可以使用<code class="highlighter-rouge">withArrayLen</code>函数,将内容为<code class="highlighter-rouge">Storable</code> (即可序列化为 C可以理解的字节序列) 的Haskell数组 和 生成这些值的打包数组,然后将 其与数组的长度一起传递给 回调函数. 在这种情况下,它将 数组的长度作为<code class="highlighter-rouge">Int</code>类型传递,之后我们转换成 预期的<code class="highlighter-rouge">CUInt</code>通过<code class="highlighter-rouge">fromIntegral</code>函数.</p>
+
+<h2 id="nodejs">Node.js</h2>
+
+<pre><code class="javascript">const ffi = require(&#39;ffi&#39;);
+const ref = require(&#39;ref&#39;);
+const array = require(&#39;ref-array&#39;);
+
+const U32array = array(ref.types.uint32);
+
+const lib = ffi.Library(&#39;libslice_arguments&#39;, {
+  sum_of_even: [&#39;uint32&#39;, [U32array, &#39;size_t&#39;]],
+});
+
+const numbers = new U32array([1, 2, 3, 4, 5, 6]);
+console.log(lib.sum_of_even(numbers, numbers.length));
+</code></pre>
+
+<p>我们需要使用<a href="https://www.npmjs.com/package/ref"><code class="highlighter-rouge">ref</code></a>和<a href="https://www.npmjs.com/package/ref-array"><code class="highlighter-rouge">ref-array</code></a>用于将 node.js内存缓冲区 包装成 类似于数组对象,这些对象可以通过 JavaScript轻松操作. 该<code class="highlighter-rouge">u32array</code>类型 (使用来自<code class="highlighter-rouge">ref.types</code>的原始构造) 然后可以在函数签名中使用.</p>
+
+<h2 id="c-1">C#</h2>
+
+<pre><code class="csharp">using System;
+using System.Runtime.InteropServices;
+
+class SliceArguments
+{
+    [DllImport(&quot;slice_arguments&quot;)]
+    private static extern uint sum_of_even(int[] n, UIntPtr len);
+
+    public static uint SumOfEven(int[] n)
+    {
+        return sum_of_even(n, (UIntPtr)n.Length);
+    }
+
+    static public void Main()
+    {
+        var sum = SliceArguments.SumOfEven(new [] {1,2,3,4,5,6});
+        Console.WriteLine(sum);
+    }
+}
+</code></pre>
+
+<p>传递数组很复杂,因为我们需要传递 指向数据的指针 以及 数组的长度. 与前面的例子不同,我们引入了非惯用语<code class="highlighter-rouge">snake_case</code>作为私人方法. 然后我们可以添加一个公共方法,它包装 私有方法 并提供 预期的接口.</p>
+
+<p>C代码使用了<code class="highlighter-rouge">size_t</code>,一种大小 根据平台而变化 的类型. 为了反映这一点,我们使用了一个<code class="highlighter-rouge">UIntPtr</code>.</p>
+
+<h2 id="julia">Julia</h2>
+
+<pre><code class="">#!/usr/bin/env julia
+using Libdl
+
+libname = &quot;slice_arguments&quot;
+if !Sys.iswindows()
+    libname = &quot;lib$(libname)&quot;
+end
+
+lib = Libdl.dlopen(libname)
+sumofeven_sym = Libdl.dlsym(lib, :sum_of_even)
+
+sumofeven(a:: Array{UInt32}) = ccall(
+    sumofeven_sym,
+    UInt32,
+    (Ptr{UInt32}, Csize_t),
+    a,
+    length(a))
+
+println(sumofeven(UInt32[1, 2, 3, 4, 5, 6]))
+</code></pre>
+
+<p>传递需要指针和数组的长度的数组。
+该数组被隐式转换为指向第一个元素的指针，
+类型为<code class="highlighter-rouge">Ptr{UInt32}</code>。<code class="highlighter-rouge">Csize</code>类型是Julia的对<code class="highlighter-rouge">size_t</code>的等价物
+。我们还强制执行函数参数类型
+<code class="highlighter-rouge">Array{UInt32}</code>，这是原生函数有效兼容的特定数组类型。</p>
+
+<p>这个例子有点复杂，因为在Julia中有两个
+的原始指针类型。 <a href="julia-Ptr"><code class="highlighter-rouge">Ptr{T}</code></a>是一个原始
+内存地址为<code class="highlighter-rouge">T</code>类型的值，而<a href="julia-Ref"><code class="highlighter-rouge">Ref{T}</code></a>
+是一个托管指针，指向Julia垃圾收集器不会放手的数据
+只要这个<code class="highlighter-rouge">Ref</code>还引用。这些类型将是
+在任何一种情况下都转换为<code class="highlighter-rouge">ccall</code>中的C兼容指针类型。</p>
+
+<p>虽然, 在传递指向原生函数的参数时，<a href="https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code/#When-to-use-T,-Ptr{T}-and-Ref{T}-1">首选</a>使用<code class="highlighter-rouge">Ref</code>
+，甚至可
+通过可变指针传递它们(可让原生函数
+修改指向的对象），C风格的数组是一个例外
+规则，应该用原始的’Ptr`和其长度传递。</p>
+
+
+      </main>
+
+      <nav class="content-navigation">
+        <ul>
+          
+            <li><a href="/rust-ffi-omnibus/">前言</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="footer-meta">
+    <ul class="footer-meta-social-media">
+      <li>
+        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+          <span class="icon  icon--github">
+            <svg viewBox="0 0 16 16">
+              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+            </svg>
+          </span>
+
+          <span class="username">rust-ffi-omnibus</span>
+        </a>
+      </li>
+
+      
+    </ul>
+
+    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+</p>
+  </div>
+
+  <div class="footer-license">
+    <div class="footer-license-text">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
+      </a>
+      The Rust FFI Omnibus is licensed under a
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+      </a>
+      The source code is licensed under the
+      <a rel="license" href="http://opensource.org/licenses/MIT">
+        MIT License.
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+
+  </body>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
+  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+
+  
+</html>

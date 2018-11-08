@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>基本 - The Rust FFI Omnibus</title>
+  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+">
+
+  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
+  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/basics/">
+  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
+  <script src="/rust-ffi-omnibus/script/main.js"></script>
+</head>
+
+
+  <body class="site">
+
+    <header class="site-header">
+
+  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
+
+</header>
+
+
+    <div class="site-content content">
+      <main class="content-content">
+        <h1 id="section">基本</h1>
+
+<p>假设您熟悉 Rust的基础知识 以及 您将要调用的语言。 你应该已经读过<a href="https://doc.rust-lang.org/book/ffi.html">官方FFI文件</a>,但这里将 介绍一些基础知识.</p>
+
+<h2 id="rust">Rust</h2>
+
+<p>所有 Rust示例 都将使用 <a href="https://crates.io/">cargo</a> 和<a href="http://doc.rust-lang.org/libc/libc/index.html">libc 箱子</a>. 每个示例<code class="highlighter-rouge">Cargo.toml</code>都包含以下样板:</p>
+
+<pre><code class="">[dependencies]
+libc = &quot;*&quot;
+
+[lib]
+crate-type = [&quot;cdylib&quot;]
+</code></pre>
+
+<p><code class="highlighter-rouge">crate-type = ["cdylib"]</code>创建一个动态链接的库. 查看Cargo 文档的<a href="http://doc.crates.io/manifest.html#building-dynamic-or-static-libraries">动态或静态库</a>，了解更多信息.</p>
+
+<p><code class="highlighter-rouge">cdylib</code>是<a href="https://github.com/rust-lang/rfcs/blob/master/text/1510-cdylib.md">在RFC 1510中引入</a>,并改善现有的<code class="highlighter-rouge">dylib</code>文件,减小其大小,和导出符号减少。 它是<a href="https://blog.rust-lang.org/2016/07/07/Rust-1.10.html">在Rust 1.10中实现</a>; 如果您使用的是早期版本,则鼓励您升级,但也可以继续使用<code class="highlighter-rouge">dylib</code>，带点小的不良影响.</p>
+
+<p>一些示例非常小,且不会使用 Rust标准库 中的任何功能. 这有个<a href="https://github.com/rust-lang/rust/issues/18807">已知问题</a>和链接会失败。 唯一的解决方法是包含一个导出，但未使用的函数,该函数使用 标准库中的某些内容。 这些函数会调用<code class="highlighter-rouge">fix_linking_when_not_using_stdlib</code>并可以安全地删除任何大型项目.</p>
+
+<h2 id="c">C</h2>
+
+<p>所有C示例 都将使用 C11标准 进行编译.</p>
+
+<h2 id="ruby">Ruby</h2>
+
+<p>所有Ruby示例都将使用 Ruby 2.5 和 <a href="https://github.com/ffi/ffi">FFI gem</a>.</p>
+
+<h2 id="python">Python</h2>
+
+<p>所有Python示例都将使用Python 3.7 和<a href="https://docs.python.org/3/library/ctypes.html">ctypes 库</a>.</p>
+
+<h2 id="haskell">Haskell</h2>
+
+<p>所有Haskell示例都将使用 GHC 8.4 的 <code class="highlighter-rouge">ForeignFunctionInterface</code>语言扩展,且只有<code class="highlighter-rouge">base</code>GHC附带的库.</p>
+
+<h2 id="nodejs">Node.js</h2>
+
+<p>所有Node.js示例 都将使用 Node.js 8.12 和<a href="https://www.npmjs.com/package/node-ffi">ffi 包</a>.</p>
+
+<h2 id="c-1">C#</h2>
+
+<p>所有 C#示例 都将使用 Mono 5.14 进行编译. 假设此代码将 与Microsoft CLR框架一起使用,但这是未经测试的.</p>
+
+<h2 id="julia">Julia</h2>
+
+<p>所有的例子使用 Julia 1.0, 并依赖语言的内置<a href="https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code">C函数调用功能</a>. 也可能运行在 v0.7, 但并未测试.</p>
+
+<h2 id="section-1">运行示例</h2>
+
+<p>运行示例时,您需要确保系统可以找到 Rust动态库.</p>
+
+<p>对 mac OS X和Linux上的大多数shell,可以通过在命令前加上<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug</code>来完成. 例如,要运行 Python示例,您可以使用<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug python src/main.py</code>.</p>
+
+<p>在 Windows 上,最简单的操作是在运行示例之前, 将 已编译的动态库 复制到当前工作目录中. 你只需要<code class="highlighter-rouge">.dll</code>文件. 另请注意,在运行 Python示例 时,您可能希望使用<code class="highlighter-rouge">py</code>代替<code class="highlighter-rouge">python</code>,特别是如果您安装了多个版本的 Python.</p>
+
+
+      </main>
+
+      <nav class="content-navigation">
+        <ul>
+          
+            <li><a href="/rust-ffi-omnibus/">前言</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+          
+            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
+          
+        </ul>
+      </nav>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="footer-meta">
+    <ul class="footer-meta-social-media">
+      <li>
+        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+          <span class="icon  icon--github">
+            <svg viewBox="0 0 16 16">
+              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+            </svg>
+          </span>
+
+          <span class="username">rust-ffi-omnibus</span>
+        </a>
+      </li>
+
+      
+    </ul>
+
+    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+</p>
+  </div>
+
+  <div class="footer-license">
+    <div class="footer-license-text">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
+      </a>
+      The Rust FFI Omnibus is licensed under a
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+      </a>
+      The source code is licensed under the
+      <a rel="license" href="http://opensource.org/licenses/MIT">
+        MIT License.
+      </a>
+    </div>
+  </div>
+
+</footer>
+
+
+  </body>
+
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
+  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+
+  
+</html>

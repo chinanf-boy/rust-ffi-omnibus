@@ -1,0 +1,10 @@
+title: The Rust FFI Omnibus
+email: yobrave@outlook.com
+description: >
+  将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C,
+  Ruby, or Python.
+baseurl: "/rust-ffi-omnibus"
+url: "http://llever.com"
+
+# Build settings
+markdown: kramdown
