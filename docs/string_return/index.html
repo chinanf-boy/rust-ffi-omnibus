@@ -29,9 +29,9 @@
 
     <div class="site-content content">
       <main class="content-content">
-        <h1 id="rust">返回 已分配字符串 的 Rust函数</h1>
+        <h1 id="rust--">Rust 函数：返回 已分配字符串</h1>
 
-<p>由于同样的原因,通过FFI 返回分配的字符串 很复杂<a href="../objects">而返回一个对象</a>: Rust分配器 可以与 FFI边界另一侧的分配器不同. 它也有与<a href="../string_arguments">传递一个字符串参数</a>处理 NUL终止字符串 相同的限制.</p>
+<p>与<a href="../objects">返回一个对象</a>同样的原因，通过 FFI 返回一个分配的字符串很复杂: Rust 分配器 可以与 FFI 边界另一侧(语言)的分配器不同。它与<a href="../string_arguments">传递一个字符串参数</a>相同，也有处理 NUL 终止字符串的限制。</p>
 
 <pre><code class="rust">extern crate libc;
 
@@ -58,7 +58,7 @@ pub extern fn theme_song_free(s: *mut c_char) {
 }
 </code></pre>
 
-<p>这里我们使用一对方法<a href="https://doc.rust-lang.org/std/ffi/struct.CString.html#method.into_raw"><code class="highlighter-rouge">into_raw</code></a>和<a href="https://doc.rust-lang.org/std/ffi/struct.CString.html#method.from_raw"><code class="highlighter-rouge">from_raw</code></a>. 这些转换一个<code class="highlighter-rouge">CString</code>到 可以通过FFI边界的 原始指针. 字符串的所有权 将传递 给调用者,但 调用者 必须将 字符串返回给Rust 才能正确释放内存.</p>
+<p>这里我们使用一对方法<a href="https://doc.rust-lang.org/std/ffi/struct.CString.html#method.into_raw"><code class="highlighter-rouge">into_raw</code></a>和<a href="https://doc.rust-lang.org/std/ffi/struct.CString.html#method.from_raw"><code class="highlighter-rouge">from_raw</code></a>。先会将一个<code class="highlighter-rouge">CString</code>转换成一个原始指针，这样也许可以跨过 FFI 边界。字符串的所有权，传递给了调用者，但调用者必须将字符串返回给 Rust，才能正确释放内存。</p>
 
 <h2 id="c">C</h2>
 
@@ -78,7 +78,7 @@ int main(void) {
 }
 </code></pre>
 
-<p>对于C版本来说没什么好玩的: <code class="highlighter-rouge">char *</code>是返回的,可以打印,然后转回来释放.</p>
+<p>在 C 版本，这没什么好玩的: <code class="highlighter-rouge">char *</code>是返回的，可以打印，然后传回去，释放.</p>
 
 <h2 id="ruby">Ruby</h2>
 
@@ -107,9 +107,9 @@ end
 puts ThemeSong::Binding.generate(5)
 </code></pre>
 
-<p>因为 字符串已分配,所以我们需要确保 在超出范围时 解除分配. 像一个<a href="../objects">对象</a>,我们的<code class="highlighter-rouge">FFI::AutoPointer</code>子类会为我们自动释放指针.</p>
+<p>因为 字符串已分配，所以我们需要在超出范围时，确保释放分配。 像一个<a href="../objects">对象</a>，我们的<code class="highlighter-rouge">FFI::AutoPointer</code>子类，会为我们自动释放指针。</p>
 
-<p>我们定义<code class="highlighter-rouge">to_s</code>使用 UTF-8编码 将 原始字符串 延迟转换为 Ruby字符串 并记住结果. Rust生成的 任何字符串 都是有效的 UTF-8.</p>
+<p>我们定义<code class="highlighter-rouge">to_s</code>函数，使用 UTF-8 编码，将原始字符串延迟转换为一个 Ruby 字符串，并记住结果。Rust 生成的任何字符串，都是有效的 UTF-8。</p>
 
 <h2 id="python">Python</h2>
 
@@ -137,9 +137,9 @@ def themeSongGenerate(count):
 print(themeSongGenerate(5))
 </code></pre>
 
-<p>我们必须使用<code class="highlighter-rouge">c_void_p</code>代替<code class="highlighter-rouge">c_char_p</code>作为类型的返回值,因为原<code class="highlighter-rouge">c_char_p</code>将自动转换为Python字符串. 这个字符串将被 Python不正确地释放,而不是Rust.</p>
+<p>我们必须使用<code class="highlighter-rouge">c_void_p</code>代替<code class="highlighter-rouge">c_char_p</code>，作为类型的返回值，因为原<code class="highlighter-rouge">c_char_p</code>，将自动转换为 Python 字符串。这个字符串将被 Python 不正确地释放，而不是由 Rust 释放。</p>
 
-<p>我们投了<code class="highlighter-rouge">c_void_p</code>到了<code class="highlighter-rouge">c_char_p</code>,获取值,并将 原始字节编码为UTF-8字符串.</p>
+<p>我们换成<code class="highlighter-rouge">c_void_p</code>，不要<code class="highlighter-rouge">c_char_p</code>，获取值，并将原始字节编码为 UTF-8 字符串。</p>
 
 <h2 id="haskell">Haskell</h2>
 
@@ -174,7 +174,7 @@ main = do
     Just str -&gt; putStrLn str
 </code></pre>
 
-<p>在调用FFI方法之后,我们检查字符串是否是<code class="highlighter-rouge">NULL</code>. 如果没有,我们使用<code class="highlighter-rouge">peekCString</code> 将 其转换为Haskell字符串 并释放 Rust字符串.</p>
+<p>在调用 FFI 方法之后，我们检查字符串是否是<code class="highlighter-rouge">NULL</code>。 如果没有，我们使用<code class="highlighter-rouge">peekCString</code> 将其转换为 Haskell 字符串，并让 Rust 字符串 <code class="highlighter-rouge">free</code>。</p>
 
 <h2 id="nodejs">Node.js</h2>
 
@@ -197,9 +197,9 @@ function themeSongGenerate(len) {
 console.log(themeSongGenerate(5));
 </code></pre>
 
-<p>该字符串作为<code class="highlighter-rouge">char *</code>返回,我们可以通过调用<code class="highlighter-rouge">readCString</code>转换为JavaScript字符串,在将它传回去之前.</p>
+<p>该字符串作为<code class="highlighter-rouge">char *</code>返回，我们可以在将它传回去之前，通过调用<code class="highlighter-rouge">readCString</code>转换为 JavaScript 字符串。</p>
 
-<h2 id="c-1">C#</h2>
+<h2 id="c-1">C\</h2>
 
 <pre><code class="csharp">using System;
 using System.Runtime.InteropServices;
@@ -269,9 +269,9 @@ public class ThemeSong : IDisposable
 }
 </code></pre>
 
-<p>我们遵循与 对象示例 类似的模式: Rust字符串是包含在<code class="highlighter-rouge">SafeHandle</code>子类和一个包装类<code class="highlighter-rouge">ThemeSong</code>,确保控制正确放置.</p>
+<p>我们遵循与 Object 示例相似的模式: Rust 字符串是包含在<code class="highlighter-rouge">SafeHandle</code>子类，和一个包装类<code class="highlighter-rouge">ThemeSong</code>确保 Handle 是正确<code class="highlighter-rouge">Dispose</code>的。</p>
 
-<p>不幸的是,没有简单的方法将 指针 读作 UTF-8字符串. C#有 ANSI字符串和”Unicode”字符串 (实际上是UCS-2) 的情况,但没有UTF-8. 我们需要自己写.</p>
+<p>不幸的是，没有简单的方法将，指针读作一个 UTF-8 字符串。 C#有 ANSI 字符串和”Unicode”字符串 (实际上是 UCS-2) 的情况，但没有 UTF-8。 我们需要自己写。</p>
 
 <h2 id="julia">Julia</h2>
 
@@ -305,11 +305,7 @@ song = generatethemesong(5)
 println(song)
 </code></pre>
 
-<p>我们使用 <code class="highlighter-rouge">Cstring</code> 数据类型 表示为一个 NUL-终止 字符。
-而不是用Julia空间已分配的字符表示, 这个例子
-用<code class="highlighter-rouge">unsafe_string</code>建立了字符的副本 , 由Julia自身管理, 并在之后传回Rust字符串。该
-<a href="../objects#julia">objects</a>部分提供了一个
-在Julia语言,资源仍然存在的例子。</p>
+<p>我们使用 <code class="highlighter-rouge">Cstring</code> 数据类型表示为一个 NUL-终止 字符。而不是用 Julia 空间握住已分配的字符，这个例子用<code class="highlighter-rouge">unsafe_string</code>建立了字符串的一个副本，由 Julia 自身管理，并在之后传回这个 Rust 字符串。该<a href="../objects#julia">objects</a>章节，提供了一个资源保持存活的例子。</p>
 
 
       </main>

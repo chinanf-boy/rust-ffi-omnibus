@@ -29,9 +29,9 @@
 
     <div class="site-content content">
       <main class="content-content">
-        <h1 id="rust">其他语言使用Rust对象</h1>
+        <h1 id="rust-">其他语言使用 Rust 对象</h1>
 
-<p>让我们创建一个Rust对象,告诉我们 每个美国邮政编码 中有多少人. 我们希望能够在其他语言中使用 此逻辑,但我们只需要 在FFI边界上 传递 整数或字符串 等简单原语. 该对象将具有 可变和不可变的方法. 因为我们无法查看对象内部,所以这通常被称为<em>不透明的物体</em>或者<em>不透明的指针</em>.</p>
+<p>让我们创建一个 Rust 对象，用来告诉我们，每个美国邮政编码有多少人。我们希望能够在其他语言中使用此逻辑，但我们只需要 在 FFI 边界上，传递整数或字符串等简单原始类型。而该对象会具有可变和不可变的方法。因为我们无法查看对象内部，所以，这通常被称为<em>不透明的物体</em>或者<em>不透明的指针</em>。</p>
 
 <pre><code class="rust">extern crate libc;
 
@@ -97,15 +97,15 @@ pub extern fn zip_code_database_population_of(ptr: *const ZipCodeDatabase, zip: 
 }
 </code></pre>
 
-<p>该<code class="highlighter-rouge">struct</code>以Rust正常的方式定义的. 一<code class="highlighter-rouge">extern</code>为 对象的每个函数 创建函数. C 没有 内置的 命名空间概念,因此 为每个函数添加 包名或类型名称 是正常的. 对于这个例子,我们使用<code class="highlighter-rouge">zip_code_database</code>. 遵循正常的 C 规范,始终将 指向对象的指针 作为 第一个参数.</p>
+<p>该<code class="highlighter-rouge">struct</code>以 Rust 正常的方式定义的。为对象的每个函数，创建一个<code class="highlighter-rouge">extern</code>函数. C 没有内置命名空间的概念，因此，为每个函数添加，一个包名或类型名称前缀，是很正常的。 对于这个例子，我们使用<code class="highlighter-rouge">zip_code_database</code>。遵循正常的 C 规范，始终将，指向对象的指针 作为 第一个参数。</p>
 
-<p>要创建一个新的对象实例,我们 <code class="highlighter-rouge">box</code>了 对象的构造函数. 这会将 结构 放在堆上,它将具有稳定的内存地址. 使用<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html#method.into_raw"><code class="highlighter-rouge">Box::into_raw</code></a> 将 该地址转换为 原始指针.</p>
+<p>要创建一个新的对象实例，我们 <code class="highlighter-rouge">box</code>化对象的构造函数。(<code class="highlighter-rouge">box</code>)会将结构放在堆上，这就有了一个稳定的内存地址。使用<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html#method.into_raw"><code class="highlighter-rouge">Box::into_raw</code></a> 将该地址转换为一个原始指针。</p>
 
-<p>该指针指向 Rust分配的内存; Rust分配的内存<strong>必须</strong>由Rust解除分配. 我们用<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html#method.from_raw"><code class="highlighter-rouge">Box::from_raw</code></a>将 指针 转回<code class="highlighter-rouge">Box&lt;ZipCodeDatabase&gt;</code>当释放对象时. 与其他功能不同,我们<em>能</em>允许<code class="highlighter-rouge">NULL</code>通过,但在这种情况下 根本不做任何事. 这对 客户程序员来说 非常好.</p>
+<p>该指针指向 Rust 分配的内存; Rust 分配的内存<strong>必须</strong>由 Rust 解分配。当释放对象时，我们用<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html#method.from_raw"><code class="highlighter-rouge">Box::from_raw</code></a>将指针转回<code class="highlighter-rouge">Box&lt;ZipCodeDatabase&gt;</code>。与其他函数不同，我们<em>能</em>允许<code class="highlighter-rouge">NULL</code>的传递，但在这种情况下，只是不做事。这对客户端程序员来说，是好事。</p>
 
-<p>要从 原始指针 创建 引用,可以使用简洁语法<code class="highlighter-rouge">&amp;*</code>,表示应该 取消引用指针 然后重新引用. 创建 可变引用 类似,但使用<code class="highlighter-rouge">&amp;mut *</code>. 像其他指针一样,您必须确保指针不是<code class="highlighter-rouge">NULL</code>.</p>
+<p>要从一个原始指针，创建一个引用，可以使用简洁语法<code class="highlighter-rouge">&amp;*</code>，表示，应解引用指针，然后重新引用。 创建一个可变引用是类似的，但使用<code class="highlighter-rouge">&amp;mut *</code>。像其他指针一样，您必须确保指针不是<code class="highlighter-rouge">NULL</code>。</p>
 
-<p>注意一个<code class="highlighter-rouge">*const T</code>可由<code class="highlighter-rouge">*mut T</code>转换,并且没有什么能阻止 客户端代码 永远不会调用 释放函数,也不会多次调用它. 内存管理和安全保障 完全掌握在程序员手中.</p>
+<p>注意一个<code class="highlighter-rouge">*const T</code>可与<code class="highlighter-rouge">*mut T</code>，自由相互转换，并且即便永远不调用释放函数，或是多次调用，也阻止不了客户端代码。内存管理和安全保障，完全掌握在程序员手中。</p>
 
 <h2 id="c">C</h2>
 
@@ -139,10 +139,9 @@ int main(void) {
 }
 </code></pre>
 
-<p>创建一个虚拟结构,以提供少量的类型安全性.</p>
+<p>创建一个虚拟结构，以提供少量的类型安全性。</p>
 
-<p>该<code class="highlighter-rouge">const</code>修饰符适用于适当的函数,甚至
-虽然 const-correctness 在 C 中 比 在Rust中 更具流畅</p>
+<p>该<code class="highlighter-rouge">const</code>修饰符给到了适当的函数，甚至即便，const-正确性 在 C 中 比 在 Rust 中，更不稳定。</p>
 
 <h2 id="ruby">Ruby</h2>
 
@@ -185,9 +184,9 @@ pop2 = database.population_of(&quot;20500&quot;)
 puts pop1 - pop2
 </code></pre>
 
-<p>为了包装原始函数,我们创建了一个继承自<a href="http://www.rubydoc.info/github/ffi/ffi/FFI/AutoPointer"><code class="highlighter-rouge">AutoPointer</code></a>的小类. <code class="highlighter-rouge">AutoPointer</code>将确保在释放对象时,释放底层资源. 为此,用户必须定义<code class="highlighter-rouge">self.release</code>方法.</p>
+<p>为了包装原始函数，我们创建了一个继承自<a href="http://www.rubydoc.info/github/ffi/ffi/FFI/AutoPointer"><code class="highlighter-rouge">AutoPointer</code></a>的小类。<code class="highlighter-rouge">AutoPointer</code>将确保在释放对象时，释放底层资源。 为此，用户必须定义<code class="highlighter-rouge">self.release</code>方法。</p>
 
-<p>不幸的是,因为我们继承了<code class="highlighter-rouge">AutoPointer</code>,我们无法重新定义 初始化程序. 为了更好地将 概念组合 在一起,我们将 FFI方法 绑定 在嵌套模块中. 我们为绑定方法提供了 更短的名称,使客户端可以只调用<code class="highlighter-rouge">ZipCodeDatabase::Binding.new</code>.</p>
+<p>不幸的是，因为我们继承了<code class="highlighter-rouge">AutoPointer</code>，我们无法重新定义初始化程序。为了更好地将概念，组合 一起，我们将 FFI 方法 绑定在嵌套模块中。我们为绑定方法提供了 更短的名称，使客户端可以只调用<code class="highlighter-rouge">ZipCodeDatabase::Binding.new</code>。</p>
 
 <h2 id="python">Python</h2>
 
@@ -235,11 +234,9 @@ with ZipCodeDatabase() as database:
     print(pop1 - pop2)
 </code></pre>
 
-<p>我们创建一个空结构 来表示我们的类型. 这只会是
-与<code class="highlighter-rouge">POINTER</code>方法结合使用，创建一个新
-类型 作为指向现有指针的指针</p>
+<p>我们创建一个空结构(structure)来表示我们的类型。这只会与<code class="highlighter-rouge">POINTER</code>方法结合使用，该方法会创建一个新类型，作为指向现有指针的指针。</p>
 
-<p>为确保正确清理内存,我们使用了<em>上下文经理</em>. 这通过我们的 class 绑定<code class="highlighter-rouge">__enter__</code>和<code class="highlighter-rouge">__exit__</code>方法. 我们使用<code class="highlighter-rouge">with</code>声明开始新的上下文. 当上下文结束时,<code class="highlighter-rouge">__exit__</code>方法将自动调用,防止内存泄漏.</p>
+<p>为确保正确清理内存，我们使用了一个<em>context manager</em>。这通过<code class="highlighter-rouge">__enter__</code>和<code class="highlighter-rouge">__exit__</code>方法，绑住我们的 class。我们使用<code class="highlighter-rouge">with</code>声明，开始新的上下文。当上下文结束时，<code class="highlighter-rouge">__exit__</code>方法将自动调用，防止内存泄漏。</p>
 
 <h2 id="haskell">Haskell</h2>
 
@@ -293,13 +290,13 @@ main = do
         print (pop1 - pop2)
 </code></pre>
 
-<p>我们首先定义一个空类型 来引用 不透明对象. 在定义导入的函数时,我们使用<code class="highlighter-rouge">Ptr</code>的类型构造 新类型, 将作为从Rust返回的 指针的类型. 我们也用<code class="highlighter-rouge">IO</code>因为 分配,释放和填充对象 都是具有副作用的函数.</p>
+<p>我们首先定义一个空类型，来引用不透明对象。在定义导入的函数时，我们使用<code class="highlighter-rouge">Ptr</code>的类型构造新类型， 将作为从 Rust 返回的指针的类型。我们也用到<code class="highlighter-rouge">IO</code>了，因为 分配，释放和 populating 对象，都是具有副作用的函数。</p>
 
-<p>由于分配理论上 可能会失败,我们会检查<code class="highlighter-rouge">NULL</code>并从构造函数返回一个<code class="highlighter-rouge">Maybe</code>. 这可能有点过头了,因为当前分配器失败时,Rust会中止该过程.</p>
+<p>由于分配，理论上可能会失败，我们会检查<code class="highlighter-rouge">NULL</code>，并从构造函数返回一个<code class="highlighter-rouge">Maybe</code>。这可能有点过头了，因为其实当分配器失败时，Rust 会中止该过程。</p>
 
-<p>为了确保自动释放 分配的内存,我们使用<code class="highlighter-rouge">ForeignPtr</code>类型. 这需要一个原始的<code class="highlighter-rouge">Ptr</code>以及 在解除分配包装指针时 调用的函数.</p>
+<p>为了确保自动释放，分配的内存，我们使用<code class="highlighter-rouge">ForeignPtr</code>类型。 这需要一个原始的<code class="highlighter-rouge">Ptr</code>，以及 在解分配包装指针时，调用的函数。</p>
 
-<p>使用包装指针时,<code class="highlighter-rouge">withForeignPtr</code>用于 展开 包装指针 在传递回FFI函数之前.</p>
+<p>使用包装指针时，<code class="highlighter-rouge">withForeignPtr</code>用于在传递回 FFI 函数之前，展开包装指针。</p>
 
 <h2 id="nodejs">Node.js</h2>
 
@@ -339,13 +336,13 @@ try {
 }
 </code></pre>
 
-<p>导入函数时,我们只需声明一个<code class="highlighter-rouge">pointer</code>返回或接受类型.</p>
+<p>导入函数时，我们只需声明一个<code class="highlighter-rouge">pointer</code>，作为返回或接受的类型。</p>
 
-<p>为了使访问函数更清晰,我们创建了 一个简单的类 来 维护 我们的指针,并 参数 传递给更低级的函数. 这也让我们有机会用惯用的 JavaScript驼峰大小写 来重命名这些函数.</p>
+<p>为了使访问函数更清晰，我们创建了一个简单的类，来维护我们的指针，并 抽象传递给更底层的函数。这也让我们有机会，用习惯的 JavaScript 驼峰大小写，来重命名这些函数。</p>
 
-<p>为了确保清理资源,我们使用了<code class="highlighter-rouge">try</code>阻止,并在<code class="highlighter-rouge">finally</code>调用 释放方法.</p>
+<p>为了确保清理资源，我们使用了<code class="highlighter-rouge">try</code>去看，并在<code class="highlighter-rouge">finally</code>调用释放方法。</p>
 
-<h2 id="c-1">C#</h2>
+<h2 id="c-1">C\</h2>
 
 <pre><code class="csharp">using System;
 using System.Runtime.InteropServices;
@@ -415,13 +412,13 @@ public class ZipCodeDatabase : IDisposable
 }
 </code></pre>
 
-<p>由于调用 原生函数的能力 将更加分散,我们创建了一个<code class="highlighter-rouge">Native</code>用于保存所有定义的类.</p>
+<p>由于调用原生函数的能力更加分散，因此我们创建了一个<code class="highlighter-rouge">Native</code>类，用于保存所有定义。</p>
 
-<p>为了确保自动释放分配的内存,我们创建了一个<a href="https://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle(v=vs.110).aspx"><code class="highlighter-rouge">SafeHandle</code></a>类的子类. 这需要 实现 <code class="highlighter-rouge">IsInvalid</code>和<code class="highlighter-rouge">ReleaseHandle</code>. 由于我们的Rust函数接受释放一个<code class="highlighter-rouge">NULL</code>指针,我们可以说 每个指针都是有效的.</p>
+<p>为了确保自动释放分配的内存，我们创建了一个<a href="https://msdn.microsoft.com/en-us/library/system.runtime.interopservices.safehandle(v=vs.110).aspx"><code class="highlighter-rouge">SafeHandle</code></a>类的子类。这需要 实现 <code class="highlighter-rouge">IsInvalid</code>和<code class="highlighter-rouge">ReleaseHandle</code>。由于我们的 Rust 函数能释放一个<code class="highlighter-rouge">NULL</code>指针，我们可以说，每个指针都是有效的。</p>
 
-<p>我们可以使用我们的 安全包装 <code class="highlighter-rouge">ZipCodeDatabaseHandle</code>作为FFI类型的函数,除了 释放函数. 这些 来自包装器的实际指针将自动 编组到 包装器, .</p>
+<p>除了，释放函数，我们可以使用我们的安全包装器 <code class="highlighter-rouge">ZipCodeDatabaseHandle</code>，作为 FFI 函数的类型。这些实际指针将自动编排到包装器，反之亦然。</p>
 
-<p>我们也允许<code class="highlighter-rouge">ZipCodeDatabase</code>参与<code class="highlighter-rouge">IDisposable</code>协议,转发到 安全包装器.</p>
+<p>我们也允许<code class="highlighter-rouge">ZipCodeDatabase</code>参与<code class="highlighter-rouge">IDisposable</code>协议，转发到安全包装器。</p>
 
 <h2 id="julia">Julia</h2>
 
@@ -482,16 +479,16 @@ ZipCodeDatabase() do database
 end
 </code></pre>
 
-<p>与其他语言一样，我们将控制指针隐藏在新数据类型后面。 填充数据库的方法称为<code class="highlighter-rouge">populate!</code>，遵循Julia修改值方法的惯例，会加上<code class="highlighter-rouge">!</code>的后缀。</p>
+<p>与其他语言一样，我们将控制指针，隐藏在新数据类型后面。 人口数据库的方法，称为<code class="highlighter-rouge">populate!</code>，遵循 Julia 修改值方法的惯例，会加上<code class="highlighter-rouge">!</code>的后缀。</p>
 
-<p>目前尚未就Julia应如何处理原生资源达成共识。 虽然用于分配<code class="highlighter-rouge">ZipCodeDatabase</code>的内部构造函数模式，在这里是合适的，但我们也可以想到许多方法让Julia随后释放它。在这个例子中，我们展示了释放对象的两种方法：</p>
+<p>目前尚未就 Julia 应如何处理原生资源达成共识。虽然，分配<code class="highlighter-rouge">ZipCodeDatabase</code>的内部构造函数模式，在这里是合适的，但我们也可以想到许多方法，让 Julia 随后释放它。在这个例子中，我们展示了释放对象的两种方法：</p>
 
 <ul>
-  <li>(1)用<code class="highlighter-rouge">do</code>语法的map构造函数，以及</li>
-  <li>(2)用于手动释放对象的close重载。</li>
+  <li>(1)<code class="highlighter-rouge">do</code>语法的一个映射构造函数，以及</li>
+  <li>(2)用于手动释放对象的 <code class="highlighter-rouge">close</code> 重载。</li>
 </ul>
 
-<p>内部构造函数<code class="highlighter-rouge">ZipCodeDatabase(f)</code>负责创建和释放对象。 使用do语法，用户代码变得类似使用Python语法<code class="highlighter-rouge">with</code> 。或者，程序员可以使用其他构造，并在不再需要时，调用<code class="highlighter-rouge">close</code>方法。</p>
+<p>内部构造函数<code class="highlighter-rouge">ZipCodeDatabase(f)</code>，同时负责创建和释放对象。 使用 <code class="highlighter-rouge">do</code> 语法，用户代码变得类似 Python 语法<code class="highlighter-rouge">with</code>。或者，程序员可以使用其他构造，并在不再需要时，调用<code class="highlighter-rouge">close</code>方法。</p>
 
       </main>
 

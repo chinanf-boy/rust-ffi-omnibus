@@ -29,9 +29,9 @@
 
     <div class="site-content content">
       <main class="content-content">
-        <h1 id="rust">接受并返回元组的Rust函数</h1>
+        <h1 id="rust-">Rust 函数：接受并返回元组</h1>
 
-<p>C没有元组的概念,但最接近的模拟是一个普通的结构. 您需要为 每种独特的类型组合 创建单独的结构. 在这里,我们创建一个表示两个32位无符号整数的结构.</p>
+<p>C 没有元组的概念，但最接近的模拟是一个普通的结构。 您需要为每种独特的类型组合，创建单独的结构。在这里，我们创建一个结构，它表示两个 32 位无符号整数。</p>
 
 <pre><code class="rust">extern crate libc;
 
@@ -74,7 +74,7 @@ pub extern fn flip_things_around(tup: Tuple) -&gt; Tuple {
 pub extern fn fix_linking_when_not_using_stdlib() { panic!() }
 </code></pre>
 
-<p><code class="highlighter-rouge">#[repr(C)]</code>用于通知编译器,它应该像 C编译器那样 排列结构的字段.在结构和相应的元组之间,这两个转换实现 使用<a href="http://doc.rust-lang.org/std/convert/trait.From.html"><code class="highlighter-rouge">std::convert::From</code></a>提供符合人体工程学的转换.</p>
+<p><code class="highlighter-rouge">#[repr(C)]</code>用于通知编译器，它应该像 C 编译器那样排列结构的字段。在结构和相应的元组之间的转换实现，都用到了<a href="http://doc.rust-lang.org/std/convert/trait.From.html"><code class="highlighter-rouge">std::convert::From</code></a> trait，提供符合人体工程学的转换操作。</p>
 
 <h2 id="c">C</h2>
 
@@ -96,7 +96,7 @@ int main(void) {
 }
 </code></pre>
 
-<p>由于我们符合C兼容的习语,因此实现是直截了当的. 我们定义一个<code class="highlighter-rouge">struct</code> 使用与 Rust结构的类型 和 顺序匹配的字段,然后创建一个实例并调用该方法.</p>
+<p>由于我们符合 C 兼容的习语，因此实现是直截了当的。我们定义一个<code class="highlighter-rouge">struct</code>，使用与 Rust 结构的类型和顺序匹配的字段，然后创建一个实例并调用该方法。</p>
 
 <h2 id="ruby">Ruby</h2>
 
@@ -124,9 +124,9 @@ tup[:y] = 20
 puts Tuples.flip_things_around(tup)
 </code></pre>
 
-<p>为了镜像结构定义,我们创建了一个子类<code class="highlighter-rouge">FFI::Struct</code>并使用<code class="highlighter-rouge">layout</code>指定字段名称和类型.</p>
+<p>为了效仿结构定义，我们创建了<code class="highlighter-rouge">FFI::Struct</code>的一个子类，并使用<code class="highlighter-rouge">layout</code>指定字段名称和类型。</p>
 
-<p>附加功能时,我们使用<code class="highlighter-rouge">by_value</code>表示结构将直接传递,而不需要通过指针进行间接传递.</p>
+<p>函数附加(attach_function)时，我们使用<code class="highlighter-rouge">by_value</code>表示结构是直接传递的，而不需要通过指针进行间接传递。</p>
 
 <h2 id="python">Python</h2>
 
@@ -154,11 +154,11 @@ tup = Tuple(10, 20)
 print(lib.flip_things_around(tup))
 </code></pre>
 
-<p>为了镜像结构定义,我们创建了一个<code class="highlighter-rouge">ctypes.Structure</code>子类, 并使用<code class="highlighter-rouge">_fields_</code>指定字段名称和类型.</p>
+<p>为了效仿结构定义，我们创建了一个<code class="highlighter-rouge">ctypes.Structure</code>子类，并使用<code class="highlighter-rouge">_fields_</code>指定字段名称和类型。</p>
 
 <h2 id="haskell">Haskell</h2>
 
-<p>不幸的是,Haskell目前不支持 传递或返回任意结构. 始终需要指针间接.</p>
+<p>不幸的是，Haskell 目前不支持，传递或返回任意结构。始终需要指针间接。</p>
 
 <h2 id="nodejs">Node.js</h2>
 
@@ -179,9 +179,9 @@ const result = lib.flip_things_around(tup);
 console.log(&#39;(%d,%d)&#39;, result.x, result.y);
 </code></pre>
 
-<p>该<a href="https://www.npmjs.com/package/ref-struct"><code class="highlighter-rouge">ref-struct</code></a>允许我们构建可以传递给 FFI函数 的结构类型.</p>
+<p>该<a href="https://www.npmjs.com/package/ref-struct"><code class="highlighter-rouge">ref-struct</code></a>允许我们，构建可以传递给 FFI 函数 的结构类型。</p>
 
-<h2 id="c-1">C#</h2>
+<h2 id="c-1">C\</h2>
 
 <pre><code class="csharp">using System;
 using System.Runtime.InteropServices;
@@ -221,7 +221,7 @@ class Tuples
 }
 </code></pre>
 
-<p>为了镜像 元组结构定义,我们创建了一个<code class="highlighter-rouge">struct</code>,使用<code class="highlighter-rouge">StructLayout</code>属性并将 布局定义为顺序. 我们还提供了一些 implicit-隐式转换 运算符,使类型之间的转换相当无缝.</p>
+<p>为了效仿 元组结构定义，我们创建了一个<code class="highlighter-rouge">struct</code>，使用<code class="highlighter-rouge">StructLayout</code>属性，并将布局定义为顺序<code class="highlighter-rouge">sequential</code>。 我们还提供了一些隐式转换操作，使类型之间的转换无缝连接。</p>
 
 <h2 id="julia">Julia</h2>
 
@@ -251,7 +251,7 @@ newtuple = flipthingsaround(initial)
 println(&quot;($(newtuple.x),$(newtuple.y))&quot;)
 </code></pre>
 
-<p>使用完全相同的字段布局定义的Julia结构类型，已与C的数据数组兼容。 由于所有字段都是<a href="https://docs.julialang.org/en/v1/base/base/#Base.isbits"><code class="highlighter-rouge">isbits</code></a>，因此Tuple类型也是如此。这是因为，它存储每个内联内容，并将按值传递给原生函数。</p>
+<p>使用完全相同的字段布局定义的 Julia 结构类型，已与 C 的数据编排兼容。由于所有字段都是<a href="https://docs.julialang.org/en/v1/base/base/#Base.isbits"><code class="highlighter-rouge">isbits</code></a>，之后自然是<code class="highlighter-rouge">Tuple</code>类型。这是因为，它存储每个内联内容，并将按值传递给原生函数。</p>
 
 
       </main>

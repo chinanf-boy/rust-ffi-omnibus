@@ -31,11 +31,11 @@
       <main class="content-content">
         <h1 id="section">基本</h1>
 
-<p>假设您熟悉 Rust的基础知识 以及 您将要调用的语言。 你应该已经读过<a href="https://doc.rust-lang.org/book/ffi.html">官方FFI文件</a>,但这里将 介绍一些基础知识.</p>
+<p>这里假设您熟悉 Rust 的基础知识 ，以及 您将要调用的语言。 你应该阅读下<a href="https://doc.rust-lang.org/book/ffi.html">官方 FFI 文件</a>，但这里会概括一些基础知识.</p>
 
 <h2 id="rust">Rust</h2>
 
-<p>所有 Rust示例 都将使用 <a href="https://crates.io/">cargo</a> 和<a href="http://doc.rust-lang.org/libc/libc/index.html">libc 箱子</a>. 每个示例<code class="highlighter-rouge">Cargo.toml</code>都包含以下样板:</p>
+<p>所有 Rust 示例，都将使用 <a href="https://crates.io/">cargo</a> 和<a href="http://doc.rust-lang.org/libc/libc/index.html">libc 箱子</a>。 每个示例的<code class="highlighter-rouge">Cargo.toml</code>，都包含以下样板:</p>
 
 <pre><code class="">[dependencies]
 libc = &quot;*&quot;
@@ -44,47 +44,47 @@ libc = &quot;*&quot;
 crate-type = [&quot;cdylib&quot;]
 </code></pre>
 
-<p><code class="highlighter-rouge">crate-type = ["cdylib"]</code>创建一个动态链接的库. 查看Cargo 文档的<a href="http://doc.crates.io/manifest.html#building-dynamic-or-static-libraries">动态或静态库</a>，了解更多信息.</p>
+<p><code class="highlighter-rouge">crate-type = ["cdylib"]</code>会创建一个动态链接的库。 可查看 Cargo 文档的<a href="http://doc.crates.io/manifest.html#building-dynamic-or-static-libraries">动态或静态库</a>，了解更多信息.</p>
 
-<p><code class="highlighter-rouge">cdylib</code>是<a href="https://github.com/rust-lang/rfcs/blob/master/text/1510-cdylib.md">在RFC 1510中引入</a>,并改善现有的<code class="highlighter-rouge">dylib</code>文件,减小其大小,和导出符号减少。 它是<a href="https://blog.rust-lang.org/2016/07/07/Rust-1.10.html">在Rust 1.10中实现</a>; 如果您使用的是早期版本,则鼓励您升级,但也可以继续使用<code class="highlighter-rouge">dylib</code>，带点小的不良影响.</p>
+<p><code class="highlighter-rouge">cdylib</code>是<a href="https://github.com/rust-lang/rfcs/blob/master/text/1510-cdylib.md">在 RFC 1510 中引入</a>，并改善了现有的<code class="highlighter-rouge">dylib</code>文件，减小其大小，和导出更少符号。 它是<a href="https://blog.rust-lang.org/2016/07/07/Rust-1.10.html">在 Rust 1.10 中实现</a>的; 如果您使用的是早期版本，那鼓励您升级，但也可以继续使用<code class="highlighter-rouge">dylib</code>，带点小的不良影响而已。</p>
 
-<p>一些示例非常小,且不会使用 Rust标准库 中的任何功能. 这有个<a href="https://github.com/rust-lang/rust/issues/18807">已知问题</a>和链接会失败。 唯一的解决方法是包含一个导出，但未使用的函数,该函数使用 标准库中的某些内容。 这些函数会调用<code class="highlighter-rouge">fix_linking_when_not_using_stdlib</code>并可以安全地删除任何大型项目.</p>
+<p>一些示例非常小，且不会使用 Rust 标准库中的任何功能。 这有个<a href="https://github.com/rust-lang/rust/issues/18807">已知问题</a>和链接的失败问题。 唯一的解决方法是包含一个导出，但未使用的函数，该函数使用了标准库中的某些内容。这些函数被叫做<code class="highlighter-rouge">fix_linking_when_not_using_stdlib</code>，并在任何大型项目中，都可以安全地删除。</p>
 
 <h2 id="c">C</h2>
 
-<p>所有C示例 都将使用 C11标准 进行编译.</p>
+<p>所有 C 示例 都将使用 C11 标准 进行编译。</p>
 
 <h2 id="ruby">Ruby</h2>
 
-<p>所有Ruby示例都将使用 Ruby 2.5 和 <a href="https://github.com/ffi/ffi">FFI gem</a>.</p>
+<p>所有 Ruby 示例都将使用 Ruby 2.5 和 <a href="https://github.com/ffi/ffi">FFI gem</a>。</p>
 
 <h2 id="python">Python</h2>
 
-<p>所有Python示例都将使用Python 3.7 和<a href="https://docs.python.org/3/library/ctypes.html">ctypes 库</a>.</p>
+<p>所有 Python 示例都将使用 Python 3.7 和<a href="https://docs.python.org/3/library/ctypes.html">ctypes 库</a>。</p>
 
 <h2 id="haskell">Haskell</h2>
 
-<p>所有Haskell示例都将使用 GHC 8.4 的 <code class="highlighter-rouge">ForeignFunctionInterface</code>语言扩展,且只有<code class="highlighter-rouge">base</code>GHC附带的库.</p>
+<p>所有 Haskell 示例都将使用 GHC 8.4 的 <code class="highlighter-rouge">ForeignFunctionInterface</code>语言扩展，且只有<code class="highlighter-rouge">base</code>GHC 附带的库.</p>
 
 <h2 id="nodejs">Node.js</h2>
 
-<p>所有Node.js示例 都将使用 Node.js 8.12 和<a href="https://www.npmjs.com/package/node-ffi">ffi 包</a>.</p>
+<p>所有 Node.js 示例 都将使用 Node.js 8.12 和<a href="https://www.npmjs.com/package/node-ffi">ffi 包</a>。</p>
 
-<h2 id="c-1">C#</h2>
+<h2 id="c-1">C\</h2>
 
-<p>所有 C#示例 都将使用 Mono 5.14 进行编译. 假设此代码将 与Microsoft CLR框架一起使用,但这是未经测试的.</p>
+<p>所有 C#示例 都将使用 Mono 5.14 进行编译. 假设此代码将 与 Microsoft CLR 框架一起使用,但这是未经测试的.</p>
 
 <h2 id="julia">Julia</h2>
 
-<p>所有的例子使用 Julia 1.0, 并依赖语言的内置<a href="https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code">C函数调用功能</a>. 也可能运行在 v0.7, 但并未测试.</p>
+<p>所有的例子使用 Julia 1.0, 并依赖语言的内置<a href="https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code">C 函数调用功能</a>。 也可能运行在 v0.7, 但并未测试.</p>
 
 <h2 id="section-1">运行示例</h2>
 
-<p>运行示例时,您需要确保系统可以找到 Rust动态库.</p>
+<p>运行示例时，您需要确保系统可以找到 Rust 动态(链接)库。</p>
 
-<p>对 mac OS X和Linux上的大多数shell,可以通过在命令前加上<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug</code>来完成. 例如,要运行 Python示例,您可以使用<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug python src/main.py</code>.</p>
+<p>对 mac OS X 和 Linux 上的大多数 shell，可以通过在命令前加上<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug</code>来完成。例如，要运行 Python 示例，您可以使用<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug python src/main.py</code>.</p>
 
-<p>在 Windows 上,最简单的操作是在运行示例之前, 将 已编译的动态库 复制到当前工作目录中. 你只需要<code class="highlighter-rouge">.dll</code>文件. 另请注意,在运行 Python示例 时,您可能希望使用<code class="highlighter-rouge">py</code>代替<code class="highlighter-rouge">python</code>,特别是如果您安装了多个版本的 Python.</p>
+<p>在 Windows 上，最简单的操作是在运行示例之前, 将 已编译的动态库，复制到当前工作目录中。 你只需要<code class="highlighter-rouge">.dll</code>文件。 另请注意，在运行 Python 示例时,您可能希望使用<code class="highlighter-rouge">py</code>代替<code class="highlighter-rouge">python</code>，特别是如果您安装了多个版本的 Python。</p>
 
 
       </main>

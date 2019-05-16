@@ -29,9 +29,9 @@
 
     <div class="site-content content">
       <main class="content-content">
-        <h1 id="rust">切片参数的Rust函数</h1>
+        <h1 id="rust-">Rust 函数：切片参数</h1>
 
-<p>Rust<em>切片</em>将 指针的概念 与 一块定量元素的数据 捆绑在一起. 在 C中,数组由相同的部分组成,但没有标准容器将 它们保持在一起.</p>
+<p>Rust <em>切片</em> 将<strong>指针的概念</strong>，与<strong>一块定量元素的数据</strong>捆绑在一起。在 C 中，数组由相同的部分组成，但没有标准容器将它们维系在一起。</p>
 
 <pre><code class="rust">extern crate libc;
 
@@ -54,14 +54,14 @@ pub extern fn sum_of_even(n: *const uint32_t, len: size_t) -&gt; uint32_t {
 }
 </code></pre>
 
-<p>转换数组分为两步:</p>
+<p>转换一个数组分为两步:</p>
 
 <ol>
   <li>
-    <p>确保C指针不是<code class="highlighter-rouge">NULL</code>作为 Rust引用可能永远不会<code class="highlighter-rouge">NULL</code>.</p>
+    <p>确保 C 指针不是<code class="highlighter-rouge">NULL</code>，因 Rust 引用(可能)永远不会<code class="highlighter-rouge">NULL</code>。</p>
   </li>
   <li>
-    <p>使用<a href="http://doc.rust-lang.org/std/slice/fn.from_raw_parts.html"><code class="highlighter-rouge">from_raw_parts</code></a>将 指针和长度转换为切片. 这是一种不安全的操作,因为 取消引用 可能会无效内存.</p>
+    <p>使用<a href="http://doc.rust-lang.org/std/slice/fn.from_raw_parts.html"><code class="highlighter-rouge">from_raw_parts</code></a>将指针和长度，转换为一个切片。这是一种不安全的操作，因为可能会，<strong>解引用</strong>了无效内存。</p>
   </li>
 </ol>
 
@@ -80,7 +80,7 @@ int main(void) {
 }
 </code></pre>
 
-<p>C调用是直截了当的,因为我们使 Rust代码与C的功能相匹配. 唯一的复杂因素是确保 定义的 和 函数调用的 元素数量 相同.</p>
+<p>C 的调用是直截了当的，因为我们使 Rust 代码与 C 的能力相匹配。唯一的复杂因素是确保定义的，和函数调用的元素数量相同。</p>
 
 <h2 id="ruby">Ruby</h2>
 
@@ -105,9 +105,7 @@ end
 puts SliceArguments.sum_of_even([1,2,3,4,5,6])
 </code></pre>
 
-<p>Ruby调用需要 比 以前的示例 更多.</p>
-
-<p>这一次,我们使用<a href="https://github.com/ffi/ffi/wiki/Pointers#memorypointer"><code class="highlighter-rouge">MemoryPointer</code></a> 分配空间来存储我们的整数. 创建后,我们使用将值复制到<code class="highlighter-rouge">write_array_of_uint32</code>其中.</p>
+<p>Ruby 的调用比起以前的示例，需要更多工作。这一次,我们用<a href="https://github.com/ffi/ffi/wiki/Pointers#memorypointer"><code class="highlighter-rouge">MemoryPointer</code></a> 来分配空间，来存储我们的整数. 创建后,我们使用<code class="highlighter-rouge">write_array_of_uint32</code>，将值复制进去。</p>
 
 <h2 id="python">Python</h2>
 
@@ -131,9 +129,8 @@ def sum_of_even(numbers):
 print(sum_of_even([1,2,3,4,5,6]))
 </code></pre>
 
-<p>Python调用需要 比 以前的示例 更多的工作.</p>
-
-<p>这次,我们创建一个新类型来存储 我们的整数 并实例化类型.</p>
+<p>Python 的调用比起以前的示例，需要更多工作。
+这次,我们创建一个新类型来存储我们的整数，并用值(<code class="highlighter-rouge">*numbers</code>)，实例化这个类型。</p>
 
 <h2 id="haskell">Haskell</h2>
 
@@ -151,7 +148,7 @@ main = withArrayLen [1,2,3,4,5,6] $ \len arr -&gt;
     print (sum_of_even arr (fromIntegral len))
 </code></pre>
 
-<p>对于这个例子,我们可以使用<code class="highlighter-rouge">withArrayLen</code>函数,将内容为<code class="highlighter-rouge">Storable</code> (即可序列化为 C可以理解的字节序列) 的Haskell数组 和 生成这些值的打包数组,然后将 其与数组的长度一起传递给 回调函数. 在这种情况下,它将 数组的长度作为<code class="highlighter-rouge">Int</code>类型传递,之后我们转换成 预期的<code class="highlighter-rouge">CUInt</code>通过<code class="highlighter-rouge">fromIntegral</code>函数.</p>
+<p>对于这个例子，我们可以使用<code class="highlighter-rouge">withArrayLen</code>函数，它会拿到内容为<code class="highlighter-rouge">Storable</code> (即可序列化为 C 可以理解的字节序列) 的 Haskell 数组，并生成这些值的打包数组，然后将其与数组的长度，一起传递给回调函数。 在这种情况下，要将数组的长度作为<code class="highlighter-rouge">Int</code>类型传递，这里，我们会通过<code class="highlighter-rouge">fromIntegral</code>函数，转换成预期的<code class="highlighter-rouge">CUInt</code>。</p>
 
 <h2 id="nodejs">Node.js</h2>
 
@@ -169,9 +166,9 @@ const numbers = new U32array([1, 2, 3, 4, 5, 6]);
 console.log(lib.sum_of_even(numbers, numbers.length));
 </code></pre>
 
-<p>我们需要使用<a href="https://www.npmjs.com/package/ref"><code class="highlighter-rouge">ref</code></a>和<a href="https://www.npmjs.com/package/ref-array"><code class="highlighter-rouge">ref-array</code></a>用于将 node.js内存缓冲区 包装成 类似于数组对象,这些对象可以通过 JavaScript轻松操作. 该<code class="highlighter-rouge">u32array</code>类型 (使用来自<code class="highlighter-rouge">ref.types</code>的原始构造) 然后可以在函数签名中使用.</p>
+<p>我们需要使用<a href="https://www.npmjs.com/package/ref"><code class="highlighter-rouge">ref</code></a>和<a href="https://www.npmjs.com/package/ref-array"><code class="highlighter-rouge">ref-array</code></a>，用于将 node.js 内存缓冲（buffer），包装成类似数组的对象，这些对象可以通过 JavaScript 轻松操作。该<code class="highlighter-rouge">u32array</code>类型 (来自<code class="highlighter-rouge">ref.types</code>的原始构造) 可以之后，在函数签名中使用。</p>
 
-<h2 id="c-1">C#</h2>
+<h2 id="c-1">C\</h2>
 
 <pre><code class="csharp">using System;
 using System.Runtime.InteropServices;
@@ -194,9 +191,9 @@ class SliceArguments
 }
 </code></pre>
 
-<p>传递数组很复杂,因为我们需要传递 指向数据的指针 以及 数组的长度. 与前面的例子不同,我们引入了非惯用语<code class="highlighter-rouge">snake_case</code>作为私人方法. 然后我们可以添加一个公共方法,它包装 私有方法 并提供 预期的接口.</p>
+<p>传递数组很复杂，因为我们需要传递一个指向数据的指针 以及 数据数组的长度。与前面的例子不同，我们引入了<code class="highlighter-rouge">sum_of_even</code>函数(不是约定的编写风格)，作为私人方法. 然后我们可以添加一个公共方法，它包装私有方法，并提供预期的接口。</p>
 
-<p>C代码使用了<code class="highlighter-rouge">size_t</code>,一种大小 根据平台而变化 的类型. 为了反映这一点,我们使用了一个<code class="highlighter-rouge">UIntPtr</code>.</p>
+<p>C 代码使用了<code class="highlighter-rouge">size_t</code>，一种大小根据平台而变化的类型。为了仿造这一点，我们使用了一个<code class="highlighter-rouge">UIntPtr</code>。</p>
 
 <h2 id="julia">Julia</h2>
 
@@ -221,24 +218,13 @@ sumofeven(a:: Array{UInt32}) = ccall(
 println(sumofeven(UInt32[1, 2, 3, 4, 5, 6]))
 </code></pre>
 
-<p>传递需要指针和数组的长度的数组。
-该数组被隐式转换为指向第一个元素的指针，
-类型为<code class="highlighter-rouge">Ptr{UInt32}</code>。<code class="highlighter-rouge">Csize</code>类型是Julia的对<code class="highlighter-rouge">size_t</code>的等价物
-。我们还强制执行函数参数类型
-<code class="highlighter-rouge">Array{UInt32}</code>，这是原生函数有效兼容的特定数组类型。</p>
+<p>传递数组，需要一个指针和数组的长度。该数组被隐式转换为，指向第一个元素的指针，类型为<code class="highlighter-rouge">Ptr{UInt32}</code>。<code class="highlighter-rouge">Csize</code>类型是 Julia 的<code class="highlighter-rouge">size_t</code>等价物。我们还强制让函数参数类型为<code class="highlighter-rouge">Array{UInt32}</code>，这是原生函数有效兼容的特定数组类型。</p>
 
-<p>这个例子有点复杂，因为在Julia中有两个
-的原始指针类型。 <a href="julia-Ptr"><code class="highlighter-rouge">Ptr{T}</code></a>是一个原始
-内存地址为<code class="highlighter-rouge">T</code>类型的值，而<a href="julia-Ref"><code class="highlighter-rouge">Ref{T}</code></a>
-是一个托管指针，指向Julia垃圾收集器不会放手的数据
-只要这个<code class="highlighter-rouge">Ref</code>还引用。这些类型将是
-在任何一种情况下都转换为<code class="highlighter-rouge">ccall</code>中的C兼容指针类型。</p>
+<p>这个例子有点复杂，因为在 Julia 中，有两个的原始指针类型。 <a href="julia-Ptr"><code class="highlighter-rouge">Ptr{T}</code></a>是一个<code class="highlighter-rouge">T</code>类型值的普通内存地址，而<a href="julia-Ref"><code class="highlighter-rouge">Ref{T}</code></a>
+是一个托管指针，指向 Julia 垃圾收集器不会放手的数据，只要这个<code class="highlighter-rouge">Ref</code>还引用。任何情况下，这些类型会在<code class="highlighter-rouge">ccall</code>，转换为 C 兼容指针类型。</p>
 
-<p>虽然, 在传递指向原生函数的参数时，<a href="https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code/#When-to-use-T,-Ptr{T}-and-Ref{T}-1">首选</a>使用<code class="highlighter-rouge">Ref</code>
-，甚至可
-通过可变指针传递它们(可让原生函数
-修改指向的对象），C风格的数组是一个例外
-规则，应该用原始的’Ptr`和其长度传递。</p>
+<p>虽然, 在传递指向原生函数的参数时，<a href="https://docs.julialang.org/en/v1/manual/calling-c-and-fortran-code/#When-to-use-T,-Ptr{T}-and-Ref{T}-1">首选</a><code class="highlighter-rouge">Ref</code>
+，甚至可通过可变指针传递它们(可让原生函数，修改指向的对象），C 风格的数组是一个例外规则，应该用普通的<code class="highlighter-rouge">Ptr</code>与长度传递。</p>
 
 
       </main>
