@@ -1,41 +1,49 @@
 <!DOCTYPE html>
 <html>
-
   <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>整数 - The Rust FFI Omnibus</title>
-  <meta name="description" content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
-">
+    <title>整数 - The Rust FFI Omnibus</title>
+    <meta
+      name="description"
+      content="将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+"
+    />
 
-  <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css">
-  <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/integers/">
-  <link rel="alternate" type="application/rss+xml" title="The Rust FFI Omnibus" href="http://llever.com/rust-ffi-omnibus/feed.xml" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css">
-  <script src="/rust-ffi-omnibus/script/main.js"></script>
-</head>
-
+    <link rel="stylesheet" href="/rust-ffi-omnibus/css/main.css" />
+    <link rel="canonical" href="http://llever.com/rust-ffi-omnibus/integers/" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="The Rust FFI Omnibus"
+      href="http://llever.com/rust-ffi-omnibus/feed.xml"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/github-gist.min.css"
+    />
+    <script src="/rust-ffi-omnibus/script/main.js"></script>
+  </head>
 
   <body class="site">
-
     <header class="site-header">
-
-  <a class="site-header-title" href="/rust-ffi-omnibus/">The Rust FFI Omnibus</a>
-
-</header>
-
+      <a class="site-header-title" href="/rust-ffi-omnibus/"
+        >The Rust FFI Omnibus</a
+      >
+    </header>
 
     <div class="site-content content">
       <main class="content-content">
         <h2 id="section">传递和返回整数</h2>
 
-<p>整数是 FFI 的 “你好世界！” ，因为它们通常
-更容易越过边界.让我们创建一个库关于
-两个无符号的32位整数.</p>
+        <p>
+          整数是 FFI 的 “你好世界！” ，因为它们通常
+          更容易越过边界.让我们创建一个库关于 两个无符号的32位整数.
+        </p>
 
-<pre><code class="rust">extern crate libc;
+        <pre><code class="rust">extern crate libc;
 use libc::uint32_t;
 
 #[no_mangle]
@@ -47,35 +55,39 @@ pub extern fn addition(a: uint32_t, b: uint32_t) -&gt; uint32_t {
 pub extern fn fix_linking_when_not_using_stdlib() { panic!() }
 </code></pre>
 
-<p>用<code class="highlighter-rouge">cargo build</code>编译它，这将产生一个库在
-<code class="highlighter-rouge">target/debug/</code>.确切的文件名取决于您的平台：</p>
+        <p>
+          用<code class="highlighter-rouge">cargo build</code
+          >编译它，这将产生一个库在
+          <code class="highlighter-rouge">target/debug/</code
+          >.确切的文件名取决于您的平台：
+        </p>
 
-<table>
-  <thead>
-    <tr>
-      <th>平台</th>
-      <th>模式</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Windows</td>
-      <td><code class="highlighter-rouge">*.dll</code></td>
-    </tr>
-    <tr>
-      <td>OS X</td>
-      <td><code class="highlighter-rouge">lib*.dylib</code></td>
-    </tr>
-    <tr>
-      <td>Linux</td>
-      <td><code class="highlighter-rouge">lib*.so</code></td>
-    </tr>
-  </tbody>
-</table>
+        <table>
+          <thead>
+            <tr>
+              <th>平台</th>
+              <th>模式</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Windows</td>
+              <td><code class="highlighter-rouge">*.dll</code></td>
+            </tr>
+            <tr>
+              <td>OS X</td>
+              <td><code class="highlighter-rouge">lib*.dylib</code></td>
+            </tr>
+            <tr>
+              <td>Linux</td>
+              <td><code class="highlighter-rouge">lib*.so</code></td>
+            </tr>
+          </tbody>
+        </table>
 
-<h2 id="c">C</h2>
+        <h2 id="c">C</h2>
 
-<pre><code class="c">#include &lt;stdio.h&gt;
+        <pre><code class="c">#include &lt;stdio.h&gt;
 #include &lt;stdint.h&gt;
 
 extern uint32_t addition(uint32_t, uint32_t);
@@ -87,25 +99,35 @@ int main(void) {
 }
 </code></pre>
 
-<p>我们首先使用 正确的参数 声明一个<code class="highlighter-rouge">extern</code>函数
-和返回类型.然后可以 编译并链接到
-Rust库 使用<code class="highlighter-rouge">gcc --std=c11 -o c-example src/main.c -L
-target/debug/-lintegers</code>.</p>
+        <p>
+          我们首先使用 正确的参数 声明一个<code class="highlighter-rouge"
+            >extern</code
+          >函数 和返回类型.然后可以 编译并链接到 Rust库 使用<code
+            class="highlighter-rouge"
+            >gcc --std=c11 -o c-example src/main.c -L
+            target/debug/-lintegers</code
+          >.
+        </p>
 
-<p>如 基础部分 所述，这可以在 mac OS X和Linux上 运行
-使用</p>
+        <p>如 基本部分 所述，这可以在 mac OS X和Linux上 运行 使用</p>
 
-<p><code class="highlighter-rouge">
-LD_LIBRARY_PATH=target/debug/ ./c-example
-</code></p>
+        <p>
+          <code class="highlighter-rouge">
+            LD_LIBRARY_PATH=target/debug/ ./c-example
+          </code>
+        </p>
 
-<p>，而在 Windows上
-将<code class="highlighter-rouge">target\debug\integers.dll</code>复制到当前目录和
-运行<code class="highlighter-rouge">.\c-example</code>.</p>
+        <p>
+          ，而在 Windows上 将<code class="highlighter-rouge"
+            >target\debug\integers.dll</code
+          >复制到当前目录和 运行<code class="highlighter-rouge"
+            >.\c-example</code
+          >.
+        </p>
 
-<h2 id="ruby">Ruby</h2>
+        <h2 id="ruby">Ruby</h2>
 
-<pre><code class="ruby">require &#39;ffi&#39;
+        <pre><code class="ruby">require &#39;ffi&#39;
 
 module Integers
   extend FFI::Library
@@ -116,15 +138,17 @@ end
 puts Integers.addition(1, 2)
 </code></pre>
 
-<p>这可以使用</p>
+        <p>这可以使用</p>
 
-<p><code class="highlighter-rouge">
-LD_LIBRARY_PATH=target/debug/ ruby ./src/main.rb
-</code></p>
+        <p>
+          <code class="highlighter-rouge">
+            LD_LIBRARY_PATH=target/debug/ ruby ./src/main.rb
+          </code>
+        </p>
 
-<h2 id="python">Python</h2>
+        <h2 id="python">Python</h2>
 
-<pre><code class="python">#!/usr/bin/env python3
+        <pre><code class="python">#!/usr/bin/env python3
 
 import sys, ctypes
 from ctypes import c_uint32
@@ -139,17 +163,18 @@ lib.addition.restype = c_uint32
 print(lib.addition(1, 2))
 </code></pre>
 
-<p>如基础部分所述，这可以在mac OS X和Linux上运行
-使用
-`
-LD_LIBRARY_PATH=target/debug/python src/main.py
-<code class="highlighter-rouge">，然后打开
-Windows通过将</code>target\debug\integers.dll<code class="highlighter-rouge">复制到当前
-目录并运行</code>py src\main.py`.</p>
+        <p>
+          如基本部分所述，这可以在mac OS X和Linux上运行 使用 `
+          LD_LIBRARY_PATH=target/debug/python src/main.py
+          <code class="highlighter-rouge">，然后打开 Windows通过将</code
+          >target\debug\integers.dll<code class="highlighter-rouge"
+            >复制到当前 目录并运行</code
+          >py src\main.py`.
+        </p>
 
-<h2 id="haskell">Haskell</h2>
+        <h2 id="haskell">Haskell</h2>
 
-<pre><code class="haskell">{-# LANGUAGE ForeignFunctionInterface #-}
+        <pre><code class="haskell">{-# LANGUAGE ForeignFunctionInterface #-}
 
 import Data.Word (Word32)
 
@@ -160,21 +185,34 @@ main :: IO ()
 main = print (addition 1 2)
 </code></pre>
 
-<p>我们必须启用<code class="highlighter-rouge">ForeignFunctionInterface</code>语言扩展 和
-在包含 之前导入相关的低级类型
-<code class="highlighter-rouge">foreign import</code>声明.这包括调用约定
-（<code class="highlighter-rouge">ccall</code>），符号名称（<code class="highlighter-rouge">"addition"</code>），相应的Haskell
-(<code class="highlighter-rouge">addition</code>）名字和函数的类型.这个功能是
-实际上是纯粹的，所以我们不在类型中包含<code class="highlighter-rouge">IO</code>，而是一个
-显然不纯的函数会想要返回一个<code class="highlighter-rouge">IO</code>值
-这表明它有副作用.</p>
+        <p>
+          我们必须启用<code class="highlighter-rouge"
+            >ForeignFunctionInterface</code
+          >语言扩展 和 在包含 之前导入相关的低级类型
+          <code class="highlighter-rouge">foreign import</code
+          >声明.这包括调用约定 （<code class="highlighter-rouge">ccall</code
+          >），符号名称（<code class="highlighter-rouge">"addition"</code
+          >），相应的Haskell (<code class="highlighter-rouge">addition</code
+          >）名字和函数的类型.这个功能是
+          实际上是纯粹的，所以我们不在类型中包含<code class="highlighter-rouge"
+            >IO</code
+          >，而是一个 显然不纯的函数会想要返回一个<code
+            class="highlighter-rouge"
+            >IO</code
+          >值 这表明它有副作用.
+        </p>
 
-<p>这可以使用编译
-<code class="highlighter-rouge">ghc src/main.hs target/debug/libintegers.so -o haskell-example</code>.</p>
+        <p>
+          这可以使用编译
+          <code class="highlighter-rouge"
+            >ghc src/main.hs target/debug/libintegers.so -o
+            haskell-example</code
+          >.
+        </p>
 
-<h2 id="nodejs">Node.js</h2>
+        <h2 id="nodejs">Node.js</h2>
 
-<pre><code class="javascript">const ffi = require(&#39;ffi&#39;);
+        <pre><code class="javascript">const ffi = require(&#39;ffi&#39;);
 
 const lib = ffi.Library(&#39;libintegers&#39;, {
   addition: [&#39;uint32&#39;, [&#39;uint32&#39;, &#39;uint32&#39;]],
@@ -183,20 +221,26 @@ const lib = ffi.Library(&#39;libintegers&#39;, {
 console.log(lib.addition(1, 2));
 </code></pre>
 
-<p><code class="highlighter-rouge">Library</code>函数指定要 链接的动态库的名称，
-以及 导出函数的签名列表（以
-<code class="highlighter-rouge">function_name：[return_type，[argument_types]]</code>的形式）.然后是这些函数
-可用作<code class="highlighter-rouge">Library</code>返回的对象的方法.
-这可以使用</p>
+        <p>
+          <code class="highlighter-rouge">Library</code>函数指定要
+          链接的动态库的名称， 以及 导出函数的签名列表（以
+          <code class="highlighter-rouge"
+            >function_name：[return_type，[argument_types]]</code
+          >的形式）.然后是这些函数 可用作<code class="highlighter-rouge"
+            >Library</code
+          >返回的对象的方法. 这可以使用
+        </p>
 
-<p><code class="highlighter-rouge">
-LD_LIBRARY_PATH=target/debug node src/main.js
-</code>
-运行.</p>
+        <p>
+          <code class="highlighter-rouge">
+            LD_LIBRARY_PATH=target/debug node src/main.js
+          </code>
+          运行.
+        </p>
 
-<h2 id="c-1">C#</h2>
+        <h2 id="c-1">C#</h2>
 
-<pre><code class="csharp">using System;
+        <pre><code class="csharp">using System;
 using System.Runtime.InteropServices;
 
 class Integers
@@ -212,20 +256,29 @@ class Integers
 }
 </code></pre>
 
-<p>我们使用 Platform Invoke 功能来访问动态库中的函数
-. <code class="highlighter-rouge">DllImport</code>属性列出了该名称和
-可以找到该函数的库.这些函数是
-可用作类的静态方法.坚持 C#命名
-标准，我们使用<code class="highlighter-rouge">EntryPoint</code>属性 来使用 大写的名称
-对于暴露的功能.</p>
+        <p>
+          我们使用 Platform Invoke 功能来访问动态库中的函数 .
+          <code class="highlighter-rouge">DllImport</code>属性列出了该名称和
+          可以找到该函数的库.这些函数是 可用作类的静态方法.坚持 C#命名
+          标准，我们使用<code class="highlighter-rouge">EntryPoint</code>属性
+          来使用 大写的名称 对于暴露的功能.
+        </p>
 
-<p>这可以用<code class="highlighter-rouge">mcs -out：csharp-example src/main.cs</code>编译</p>
+        <p>
+          这可以用<code class="highlighter-rouge"
+            >mcs -out：csharp-example src/main.cs</code
+          >编译
+        </p>
 
-<p>和用<code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug mono csharp-example</code>执行.</p>
+        <p>
+          和用<code class="highlighter-rouge"
+            >LD_LIBRARY_PATH=target/debug mono csharp-example</code
+          >执行.
+        </p>
 
-<h2 id="julia">Julia</h2>
+        <h2 id="julia">Julia</h2>
 
-<pre><code class="">#!/usr/bin/env julia
+        <pre><code class="">#!/usr/bin/env julia
 using Libdl
 
 libname = &quot;integers&quot;
@@ -244,98 +297,130 @@ addition(a, b) = ccall(
 println(addition(1, 2))
 </code></pre>
 
-<p>使用原生 <a href="https://docs.julialang.org/en/v1/base/c/#ccall"><code class="highlighter-rouge">ccall</code></a> 调用外部函数. 如果提前只知道函数名, 我们也可以跳过通过<code class="highlighter-rouge">dlsym</code>获取函数指针的步骤, 改为传递一个
-<code class="highlighter-rouge">(func, lib)</code> literal 元祖:</p>
+        <p>
+          使用原生
+          <a href="https://docs.julialang.org/en/v1/base/c/#ccall"
+            ><code class="highlighter-rouge">ccall</code></a
+          >
+          调用外部函数. 如果提前只知道函数名, 我们也可以跳过通过<code
+            class="highlighter-rouge"
+            >dlsym</code
+          >获取函数指针的步骤, 改为传递一个
+          <code class="highlighter-rouge">(func, lib)</code> literal 元祖:
+        </p>
 
-<div class="language-julia highlighter-rouge"><pre class="highlight"><code><span class="n">addition</span><span class="x">(</span><span class="n">a</span><span class="x">,</span> <span class="n">b</span><span class="x">)</span> <span class="o">=</span> <span class="n">ccall</span><span class="x">(</span>
+        <div class="language-julia highlighter-rouge">
+          <pre
+            class="highlight"
+          ><code><span class="n">addition</span><span class="x">(</span><span class="n">a</span><span class="x">,</span> <span class="n">b</span><span class="x">)</span> <span class="o">=</span> <span class="n">ccall</span><span class="x">(</span>
     <span class="x">(:</span><span class="n">addition</span><span class="x">,</span> <span class="s">"libintegers"</span><span class="x">),</span> <span class="c"># ← must be a constant expression!</span>
     <span class="kt">UInt32</span><span class="x">,</span>
     <span class="x">(</span><span class="kt">UInt32</span><span class="x">,</span> <span class="kt">UInt32</span><span class="x">),</span> 
     <span class="n">a</span><span class="x">,</span> <span class="n">b</span><span class="x">)</span>
 </code></pre>
-</div>
+        </div>
 
-<p>如基础部分所述，这可以在macOS和Linux上运行
-，使用 <code class="highlighter-rouge">LD_LIBRARY_PATH=target/debug/ julia src/main.jl</code>,和在
-Windows通过将<code class="highlighter-rouge">target\debug\integers.dll</code> 复制到当前
-目录并运行<code class="highlighter-rouge">julia src\main.jl</code>.</p>
-
-
+        <p>
+          如基本部分所述，这可以在macOS和Linux上运行 ，使用
+          <code class="highlighter-rouge"
+            >LD_LIBRARY_PATH=target/debug/ julia src/main.jl</code
+          >,和在 Windows通过将<code class="highlighter-rouge"
+            >target\debug\integers.dll</code
+          >
+          复制到当前 目录并运行<code class="highlighter-rouge"
+            >julia src\main.jl</code
+          >.
+        </p>
       </main>
 
       <nav class="content-navigation">
         <ul>
-          
-            <li><a href="/rust-ffi-omnibus/">前言</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
-          
-            <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
-          
+          <li><a href="/rust-ffi-omnibus/">前言</a></li>
+
+          <li><a href="/rust-ffi-omnibus/basics/">基本</a></li>
+
+          <li><a href="/rust-ffi-omnibus/integers/">整数</a></li>
+
+          <li><a href="/rust-ffi-omnibus/string_arguments/">字符串 参数</a></li>
+
+          <li><a href="/rust-ffi-omnibus/string_return/">字符串 返回 值</a></li>
+
+          <li><a href="/rust-ffi-omnibus/slice_arguments/">切片 参数</a></li>
+
+          <li><a href="/rust-ffi-omnibus/tuples/">元组</a></li>
+
+          <li><a href="/rust-ffi-omnibus/objects/">对象</a></li>
+
+          <li><a href="/rust-ffi-omnibus/contributors/">贡献者</a></li>
         </ul>
       </nav>
     </div>
 
     <footer class="site-footer">
+      <div class="footer-meta">
+        <ul class="footer-meta-social-media">
+          <li>
+            <a href="https://github.com/shepmaster/rust-ffi-omnibus">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path
+                    fill="#828282"
+                    d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"
+                  />
+                </svg>
+              </span>
 
-  <div class="footer-meta">
-    <ul class="footer-meta-social-media">
-      <li>
-        <a href="https://github.com/shepmaster/rust-ffi-omnibus">
-          <span class="icon  icon--github">
-            <svg viewBox="0 0 16 16">
-              <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
-            </svg>
-          </span>
+              <span class="username">rust-ffi-omnibus</span>
+            </a>
+          </li>
+        </ul>
 
-          <span class="username">rust-ffi-omnibus</span>
-        </a>
-      </li>
+        <p class="footer-meta-description">
+          将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
+        </p>
+      </div>
 
-      
-    </ul>
-
-    <p class="footer-meta-description">将 Rust 代码 导出, 应用于 其他语言 的例子集合 如 C, Ruby, or Python.
-</p>
-  </div>
-
-  <div class="footer-license">
-    <div class="footer-license-text">
-      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
-        <img alt="Creative Commons License" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />
-      </a>
-      The Rust FFI Omnibus is licensed under a
-      <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
-        Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
-      </a>
-      The source code is licensed under the
-      <a rel="license" href="http://opensource.org/licenses/MIT">
-        MIT License.
-      </a>
-    </div>
-  </div>
-
-</footer>
-
-
+      <div class="footer-license">
+        <div class="footer-license-text">
+          <a
+            rel="license"
+            href="http://creativecommons.org/licenses/by-nc-sa/4.0/"
+          >
+            <img
+              alt="Creative Commons License"
+              src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png"
+            />
+          </a>
+          The Rust FFI Omnibus is licensed under a
+          <a
+            rel="license"
+            href="http://creativecommons.org/licenses/by-nc-sa/4.0/"
+          >
+            Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+            International License.
+          </a>
+          The source code is licensed under the
+          <a rel="license" href="http://opensource.org/licenses/MIT">
+            MIT License.
+          </a>
+        </div>
+      </div>
+    </footer>
   </body>
 
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"></script>
-  <script type="text/javascript">hljs.initHighlightingOnLoad();</script>
-
-  
+  <script
+    type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/rust.min.js"
+  ></script>
+  <script
+    type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/languages/haskell.min.js"
+  ></script>
+  <script type="text/javascript">
+    hljs.initHighlightingOnLoad();
+  </script>
 </html>

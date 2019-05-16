@@ -8,18 +8,18 @@ title: 整数
 
 整数是 FFI 的 "你好世界！" ，因为它们通常
 更容易越过边界.让我们创建一个库关于
-两个无符号的32位整数.
+两个无符号的 32 位整数.
 
 {% example src/lib.rs %}
 
 用`cargo build`编译它，这将产生一个库在
 `target/debug/`.确切的文件名取决于您的平台：
 
-|平台|模式|
-| ---------- | ------------ |
-| Windows |`*.dll` |
-| OS X | `lib*.dylib` |
-| Linux | `lib*.so` |
+| 平台    | 模式         |
+| ------- | ------------ |
+| Windows | `*.dll`      |
+| OS X    | `lib*.dylib` |
+| Linux   | `lib*.so`    |
 
 ## C
 
@@ -27,17 +27,14 @@ title: 整数
 
 我们首先使用 正确的参数 声明一个`extern`函数
 和返回类型.然后可以 编译并链接到
-Rust库 使用`gcc --std=c11 -o c-example src/main.c -L
-target/debug/-lintegers`.
+Rust 库 使用`gcc --std=c11 -o c-example src/main.c -L target/debug/-lintegers`.
 
-如 基础部分 所述，这可以在 mac OS X和Linux上 运行
+如 基本部分 所述，这可以在 mac OS X 和 Linux 上 运行
 使用
 
-`
-LD_LIBRARY_PATH=target/debug/ ./c-example
-`
+`LD_LIBRARY_PATH=target/debug/ ./c-example`
 
-，而在 Windows上
+，而在 Windows 上
 将`target\debug\integers.dll`复制到当前目录和
 运行`.\c-example`.
 
@@ -47,20 +44,16 @@ LD_LIBRARY_PATH=target/debug/ ./c-example
 
 这可以使用
 
-`
-LD_LIBRARY_PATH=target/debug/ ruby ./src/main.rb
-`
+`LD_LIBRARY_PATH=target/debug/ ruby ./src/main.rb`
 
 ## Python
 
 {%example src/main.py%}
 
-如基础部分所述，这可以在mac OS X和Linux上运行
+如基本部分所述，这可以在 mac OS X 和 Linux 上运行
 使用
-`
-LD_LIBRARY_PATH=target/debug/python src/main.py
-`，然后打开
-Windows通过将`target\debug\integers.dll`复制到当前
+`LD_LIBRARY_PATH=target/debug/python src/main.py`，然后打开
+Windows 通过将`target\debug\integers.dll`复制到当前
 目录并运行`py src\main.py`.
 
 ## Haskell
@@ -70,7 +63,7 @@ Windows通过将`target\debug\integers.dll`复制到当前
 我们必须启用`ForeignFunctionInterface`语言扩展 和
 在包含 之前导入相关的低级类型
 `foreign import`声明.这包括调用约定
-（`ccall`），符号名称（`"addition"`），相应的Haskell
+（`ccall`），符号名称（`"addition"`），相应的 Haskell
 (`addition`）名字和函数的类型.这个功能是
 实际上是纯粹的，所以我们不在类型中包含`IO`，而是一个
 显然不纯的函数会想要返回一个`IO`值
@@ -89,12 +82,10 @@ Windows通过将`target\debug\integers.dll`复制到当前
 可用作`Library`返回的对象的方法.
 这可以使用
 
-`
-LD_LIBRARY_PATH=target/debug node src/main.js
-`
+`LD_LIBRARY_PATH=target/debug node src/main.js`
 运行.
 
-## C\#
+## C\
 
 {%example src/main.cs%}
 
@@ -120,13 +111,13 @@ LD_LIBRARY_PATH=target/debug node src/main.js
 addition(a, b) = ccall(
     (:addition, "libintegers"), # ← must be a constant expression!
     UInt32,
-    (UInt32, UInt32), 
+    (UInt32, UInt32),
     a, b)
 ```
 
-如基础部分所述，这可以在macOS和Linux上运行
+如基本部分所述，这可以在 macOS 和 Linux 上运行
 ，使用 `LD_LIBRARY_PATH=target/debug/ julia src/main.jl`,和在
-Windows通过将`target\debug\integers.dll` 复制到当前
+Windows 通过将`target\debug\integers.dll` 复制到当前
 目录并运行`julia src\main.jl`.
 
 [ccall]: https://docs.julialang.org/en/v1/base/c/#ccall

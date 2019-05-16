@@ -3,25 +3,23 @@ layout: default
 title: 贡献者
 ---
 
-该*综合*是一个来自多种语言的例子的集合,比我所知道的更多!为此,许多人提供了修复或增强功能,因此分享它们的真实性是正确的. 
-
-
+*综合*是一个来自多种语言的例子的集合，比我所知，更多! 为此,许多人提供了修复或增强帮助，因此在此分享，他们是棒棒的。
 
 - [Daniel Keep] (Windows, Python)
-- [Getty Ritter] (Haskell)
+- [Getty Ritter](Haskell)
 - [Michael Macias] (Rust 1.4 Updates)
-- [Steve Klabnik] (Rust)
-- [Zbigniew Siciarz] (node.js)
-- [llogiq] (Typos)
+- [Steve Klabnik](Rust)
+- [Zbigniew Siciarz](node.js)
+- [llogiq](Typos)
 - [masklinn] (Typos, Section Collapsing)
-- [还有我](yobrave) (chinese translate)
+- [Eduardo Pinho](https://github.com/Enet4) (Julia)
+- [还有我](yobrave) (Chinese translate)
 
-[Daniel Keep]: https://github.com/DanielKeep
-[Getty Ritter]: https://github.com/aisamanra
-[Michael Macias]: https://github.com/zaeleus
-[Steve Klabnik]: https://github.com/steveklabnik
-[Zbigniew Siciarz]: https://github.com/zsiciarz
+[daniel keep]: https://github.com/DanielKeep
+[getty ritter]: https://github.com/aisamanra
+[michael macias]: https://github.com/zaeleus
+[steve klabnik]: https://github.com/steveklabnik
+[zbigniew siciarz]: https://github.com/zsiciarz
 [llogiq]: https://github.com/llogiq
 [masklinn]: https://github.com/masklinn
-
-[yobrave]: https://github.com/chinanfboy-
+[yobrave]: https://github.com/chinanf-boy
